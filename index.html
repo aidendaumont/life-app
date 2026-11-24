@@ -9,6 +9,11 @@
   <section id="home" class="tab active">
     <h1>Today</h1>
     <input id="taskInput" placeholder="New task">
+    <select id="taskMode">
+      <option value="today">Today only</option>
+      <option value="untilDone">Until done</option>
+      <option value="untilDeleted">Until deleted</option>
+    </select>
     <button onclick="addTask()">Add</button>
     <ul id="taskList"></ul>
   </section>
