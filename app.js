@@ -1,1 +1,31 @@
+let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
 
+    function save() {
+      localStorage.setItem("tasks", JSON.stringify(tasks));
+    }
+
+    function show() {
+      const list = document.getElementById("taskList");
+      list.innerHTML = "";
+      tasks.forEach((task, i) => {
+        const li = document.createElement("li");
+        li.textContent = task;
+        li.onclick = () => {
+          tasks.splice(i, 1);
+          save();
+          show();
+        };
+        list.appendChild(li);
+      });
+    }
+
+    function addTask() {
+      const input = document.getElementById("taskInput");
+      if (input.value === "") return;
+      tasks.push(input.value);
+      input.value = "";
+      save();
+      show();
+    }
+
+    show();
