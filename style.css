@@ -40,4 +40,25 @@ li {
   padding: 14px;
   margin-top: 10px;
   border-radius: 12px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+li input[type="checkbox"] {
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  accent-color: var(--accent);
+}
+li span {
+  flex: 1;
+}
+li button {
+  background: transparent;
+  padding: 4px 8px;
+}
+
+.done span {
+  text-decoration: line-through;
+  opacity: 0.5;
 }
