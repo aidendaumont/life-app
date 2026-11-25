@@ -30,7 +30,7 @@ function show() {
 
         const text = document.createElement("span");
         text.textContent = task.text;
-        const tag = document.creatElement("small");
+        const tag = document.createElement("small");
         tag.textContent = {
             today: "today",
             untilDone: "until done",
