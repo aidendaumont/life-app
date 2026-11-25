@@ -3,6 +3,10 @@
   --card: #1e293b;
   --text: #f1f5f9;
   --accent: #22c55e;
+  --goal: #7F77DD;
+  --note: #1D9E75;
+  --step: #475569;
+  --done: #22c55e;
 }
 
 body {
@@ -140,4 +144,16 @@ li small {
 .setting input {
   width: auto;
   padding: 0;
+}
+
+#brainMap {
+  width: 100%;
+  display: block;
+}
+.bubble-goal {
+  fill: var(--goal);
+}
+.bubble-text {
+  fill: white;
+  font-size: 14px;
 }
