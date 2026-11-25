@@ -128,3 +128,16 @@ li small {
 .goal .delete {
   background: transparent;
 }
+
+.setting {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--card);
+  padding: 14px;
+  border-radius: 12px;
+}
+.setting input {
+  width: auto;
+  padding: 0;
+}
