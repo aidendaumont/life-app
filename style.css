@@ -150,10 +150,105 @@ li small {
   width: 100%;
   display: block;
 }
-.bubble-goal {
+#brain input {
+  width: 100%;
+  box-sizing: border-box;
+  margin-top: 8px;
+}
+.brain-top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+}
+#brainBack {
+  background: var(--card);
+}
+#bubbleTools {
+  margin-top: 16px;
+}
+.setting select {
+  margin-top: 0;
+}
+#deleteBubble {
+  background: transparent;
+  color: #f87171;
+  margin-top: 12px;
+}
+
+.branch {
+  fill: none;
+  stroke: var(--text);
+  stroke-width: 1.5;
+  opacity: 0.3;
+}
+.first-link {
+  fill: none;
+  stroke: #f59e0b;
+  stroke-width: 2;
+  stroke-dasharray: 6 5;
+}
+
+.bubble {
+  cursor: pointer;
+}
+.bubble circle {
+  stroke: var(--bg);
+  stroke-width: 2;
+}
+.bubble.goal circle {
   fill: var(--goal);
 }
-.bubble-text {
+.bubble.note circle {
+  fill: var(--note);
+}
+.bubble.step circle {
+  fill: var(--step);
+}
+.bubble.done circle {
+  fill: var(--done);
+}
+.bubble text {
   fill: white;
+  font-size: 12px;
+}
+.bubble .pct {
+  font-size: 11px;
+  opacity: 0.85;
+}
+
+.ring-bg, .ring {
+  fill: none;
+  stroke-width: 4;
+}
+.ring-bg {
+  stroke: var(--card);
+}
+.ring {
+  stroke: var(--done);
+  stroke-linecap: round;
+}
+
+.tip {
+  background: var(--card);
+  border-left: 3px solid #f59e0b;
+  padding: 10px 12px;
+  border-radius: 8px;
+  margin-top: 8px;
   font-size: 14px;
+}
+
+@keyframes zoomIn {
+  from {
+    transform: scale(0.5);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+.zoom {
+  animation: zoomIn 0.3s ease-out;
+  transform-origin: 180px 180px;
 }
