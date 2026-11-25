@@ -149,6 +149,7 @@ li small {
 #brainMap {
   width: 100%;
   display: block;
+  touch-action: none;
 }
 #brain input {
   width: 100%;
@@ -251,4 +252,9 @@ li small {
 .zoom {
   animation: zoomIn 0.3s ease-out;
   transform-origin: 180px 180px;
+}
+#resetLayout {
+  margin-left: auto;
+  background: var(--card);
+  font-size: 14px;
 }
