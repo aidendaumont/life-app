@@ -18,7 +18,15 @@
     <ul id="taskList"></ul>
   </section>
 
-  <section id="goals" class="tab"><h1>Goals</h1></section>
+  <section id="goals" class="tab">
+    <h1>Goals</h1>
+    <input id="goalName" placeholder="Goal name">
+    <input id="goalTarget" type="number" placeholder="Target number (e.g. 20)">
+    <small>Deadline (optional)</small>
+    <input id="goalDeadline" type="date">
+    <button onclick="addGoal()">Add goal</button>
+    <div id="goalList"></div>
+  </section>
   <section id="habits" class="tab"><h1>Habits</h1></section>
   <section id="calendar" class="tab"><h1>Calendar</h1></section>
   <section id="settings" class="tab"><h1>Settings</h1></section>
