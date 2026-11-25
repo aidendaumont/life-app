@@ -7,6 +7,7 @@ tasks.forEach(t => {
     if (!t.mode) t.mode = "untilDeleted";
     if (!t.date) t.date = today();
 });
+let goals = JSON.parse(localStorage.getItem("goals")) || [];
 
 function save() {
     localStorage.setItem("tasks", JSON.stringify(tasks));
@@ -84,4 +85,79 @@ function cleanup() {
         return true;
     });
         save();
+}
+
+function saveGoals() {
+    localStorage.setItem("goals", JSON.stringify(goals));
+}
+
+function addGoal() {
+    const name = document.getElementById("goalName");
+    const target = document.getElementById("goalTarget");
+    const deadline = document.getElementById("goalDeadline");
+    if (name.value === "" || target.value === "") return;
+    goals.push({
+        name: name.value,
+        target: Number(target.value),
+        count: 0,
+        deadline: deadline.value,
+    });
+    name.value = "";
+    target.value = "";
+    deadline.value = "";
+    saveGoals();
+    showGoals();
+}
+function daysLeft(deadline) {
+    const diff = new Date(deadline) - new Date(today());
+    return Math.round(diff / 86400000);
+}
+
+function showGoals() {
+    const list = document.getElementById("goalList");
+    list.innerHTML = "";
+    goals.forEach((goal, i) => {
+        const card = document.createElement("div");
+        card.className = "goal";
+
+        const percent = Math.min(100, Math.round(goal.count / goal.target * 100));
+
+        let deadlineText = "";
+        if (goal.deadline) {
+            const d = daysLeft(goal.deadline);
+            deadlineText = d >= 0 ? d + " days left" : "past deadline";
+        }
+
+        card.innerHTML = `
+          <div class="goal-top">
+            <strong>${goal.name}</strong>
+            <small>${deadlineText}</small>
+          </div>
+          <div class="bar"><div class="fill" style="width: ${percent}%"></div></div>
+          <div class="goal-bottom">
+            <button class="minus">-</button>
+            <span>${goal.count} / ${goal.target} (${percent}%)</span>
+            <button class="plus">+</button>
+            <button class="delete">✕</button>
+          </div>
+        `;
+
+        card.querySelector(".plus").onclick = () => {
+            goal.count++;
+            saveGoals();
+            showGoals();
+        };
+        card.querySelector(".minus").onclick = () => {
+            if (goal.count > 0) goal.count--;
+            saveGoals();
+            showGoals();
+        };
+        card.querySelector(".delete").onclick = () => {
+            goals.splice(i, 1);
+            saveGoals();
+            showGoals();
+        };
+
+        list.appendChild(card);
+    });
 }
