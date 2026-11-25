@@ -95,3 +95,36 @@ li small {
   font-size: 12px;
   opacity: .6;
 }
+
+#goals input {
+  width: 100%;
+  box-sizing: border-box;
+  margin-bottom: 8px;
+}
+
+.goal {
+  background: var(--card);
+  padding: 14px;
+  border-radius: 12px;
+  margin-top: 12px;
+}
+.goal-top .goal-bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.bar {
+  background: var(--bg);
+  height: 12px;
+  border-radius: 6px;
+  margin: 10px 0;
+  overflow: hidden;
+}
+.fill {
+  background: var(--accent);
+  height: 100%;
+}
+.goal .delete {
+  background: transparent;
+}
