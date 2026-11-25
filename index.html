@@ -38,11 +38,28 @@
   </section>
 
   <section id="brain" class="tab">
-    <h1>Second Brain</h1>
-    <svg id="brainMap" viewbox="0 0 360 360">
-      <circle cx="180" cy="180" r="48" class="bubble-goal"></circle>
-      <text x="180" y="180" text-anchor="middle" dominant-baseline="central" class="bubble-text">My brain</text>
-    </svg>
+    <div class="brain-top">
+      <button id="brainBack" onclick="zoomOut()">←</button>
+      <span id="brainPath"></span>
+    </div>
+    <svg id="brainMap" viewBox="0 0 360 360"></svg>
+    <div id="brainTips"></div>
+
+    <input id="bubbleText" placeholder="New bubble">
+    <select id="bubbleType">
+      <option value="goal">Goal</option>
+      <option value="step">Step</option>
+      <option value="note">Note / idea</option>
+    </select>
+    <button onclick="addBubble()">Add</button>
+
+    <div id="bubbleTools">
+      <label class="setting">
+        <span>Do first</span>
+        <select id="afterSelect" onchange="setAfter()"></select>
+      </label>
+      <button id="deleteBubble" onclick="deleteBubble()">Delete this bubble</button>
+    </div>
   </section>
 
   <nav>
