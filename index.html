@@ -29,7 +29,17 @@
   </section>
   <section id="habits" class="tab"><h1>Habits</h1></section>
   <section id="calendar" class="tab"><h1>Calendar</h1></section>
-  <section id="settings" class="tab"><h1>Settings</h1></section>
+  <section id="settings" class="tab">
+    <h1>Settings</h1>
+    <label class="setting">
+      <span>Second Brain</span>
+      <input type="checkbox" switch id="brainToggle" onchange="toggleBrain()">
+    </label>
+  </section>
+
+  <section id="brain" class="tab">
+    <h1>Second Brain</h1>
+  </section>
 
   <nav>
     <button onclick="openTab('home')">🏠</button>
@@ -37,6 +47,7 @@
     <button onclick="openTab('habits')">🔥</button>
     <button onclick="openTab('calendar')">📅</button>
     <button onclick="openTab('settings')">⚙️</button>
+    <button id="brainTab" onclick="openTab('brain')">🧠</button>
   </nav>
 
   <script src="app.js"></script>
