@@ -8,6 +8,9 @@ tasks.forEach(t => {
     if (!t.date) t.date = today();
 });
 let goals = JSON.parse(localStorage.getItem("goals")) || [];
+let settings = JSON.parse(localStorage.getItem("settings")) || {
+    brain: false,
+};
 
 function save() {
     localStorage.setItem("tasks", JSON.stringify(tasks));
@@ -69,6 +72,7 @@ function addTask() {
 cleanup();
 show();
 showGoals();
+showSettings();
 
 function openTab(name) {
     document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
@@ -162,3 +166,30 @@ function showGoals() {
         list.appendChild(card);
     });
 }
+
+function saveSettings() {
+    localStorage.setItem("settings", JSON.stringify(settings));
+}
+
+function toggleBrain() {
+    settings.brain = document.getElementById("brainToggle").checked;
+    saveSettings();
+    showSettings();
+}
+
+function showSettings() {
+    document.getElementById("brainToggle").checked = settings.brain;
+    document.getElementById("brainTab").style.display = settings.brain ? "" : "none";
+}
+
+
+
+
+
+
+
+
+
+
+
+
