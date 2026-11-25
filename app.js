@@ -68,6 +68,7 @@ function addTask() {
 
 cleanup();
 show();
+showGoals();
 
 function openTab(name) {
     document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
