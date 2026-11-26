@@ -14,6 +14,14 @@ let settings = JSON.parse(localStorage.getItem("settings")) || {
 let brain = JSON.parse(localStorage.getItem("brain")) || [];
 let brainView = null;
 let dragging = null;
+let camera = {
+    x: 0,
+    y:0,
+    scale: 1,
+};
+let pointers = new Map();
+let pan = null;
+let pinch = null;
 
 function save() {
     localStorage.setItem("tasks", JSON.stringify(tasks));
@@ -263,13 +271,15 @@ function addBubble() {
 }
 
 function zoomIn(id) {
-  brainView = id;
-  showBrain();
+    brainView = id;
+    resetCamera();
+    showBrain();
 }
 
 function zoomOut() {
   if (brainView === null) return;
   brainView = findBubble(brainView).parent;
+  resetCamera();
   showBrain();
 }
 
@@ -392,6 +402,7 @@ function showBrain(animate = true) {
           x: cx + R * Math.cos(angle),
           y: cy + R * Math.sin(angle),
       };
+      applyCamera();
   });
 
   // branches from the center
@@ -473,16 +484,29 @@ function showTools(center) {
 }
 
 // brain: dragging
+function resetCamera() {
+    camera = {
+        x: 0,
+        y: 0,
+        scale: 1,
+    };
+}
+
+function applyCamera() {
+    const size = 360 / camera.scale;
+    document.getElementById("brainMap").setAttribute("viewBox", `${camera.x} ${camera.y} ${size} ${size}`);
+}
+
 function svgPoint(e) {
   const rect = document.getElementById("brainMap").getBoundingClientRect();
+  const size = 360 / camera.scale;
   return {
-    x: (e.clientX - rect.left) / rect.width * 360,
-    y: (e.clientY - rect.top) / rect.height * 360
+    x: camera.x + (e.clientX - rect.left) / rect.width * size,
+    y: camera.y + (e.clientY - rect.top) / rect.height * size,
   };
 }
 
 function startDrag(e, item, isCenter) {
-  document.getElementById("brainMap").setPointerCapture(e.pointerId);
   const pt = svgPoint(e);
   dragging = {
       item,
@@ -498,10 +522,11 @@ function moveDrag(e) {
   const pt = svgPoint(e);
   if (Math.hypot(pt.x - dragging.startX, pt.y - dragging.startY) > 6) dragging.moved = true;
   if (!dragging.moved) return;
-  dragging.item.x = Math.max(40, Math.min(320, pt.x));
-  dragging.item.y = Math.max(40, Math.min(320, pt.y));
+  dragging.item.x = pt.x;
+  dragging.item.y = pt.y;
   showBrain(false);
 }
+
 function endDrag() {
   if (!dragging) return;
   const {
@@ -523,19 +548,103 @@ function endDrag() {
   else zoomIn(item.id);
 }
 
+function startPitch() {
+    const [p1, p2] = [...pointers.values()];
+    const mid = {
+        clientX: (p1.x + p2.x) / 2,
+        clientY: (p1.y + p2.y) / 2,
+    };
+    pitch = {
+        startDist: Math.hypot(p2.x - p1.x, p2.y - p1.y),
+        startScale: camera.scale,
+        world: svgPoint(mid),
+    };
+}
+
+function onPointerDown(e) {
+    document.getElementById("brainMap").setPointerCapture(e.pointerId);
+    pointers.set(e.pointerId, {
+        x: e.clientX,
+        y: e.clientY,
+    });
+
+    if (pointers.size === 2) {
+        saveBrain();
+        dragging = null;
+        pan = null;
+        startPinch();
+    } else if (pointers.size === 1 && !dragging) {
+        pan = {
+            startX: e.clientX,
+            startY: e.clientY,
+            camX: camera.x,
+            camY: camera.y,
+        };
+    }
+}
+
+function onPointerMove(e) {
+    if (!pointers.has(e.pointerId)) return;
+    pointers.set(e.pointerId, {
+        x: e.clientX,
+        y: e.clientY,
+    });
+    const rect = document.getElementById("brainMap").getBoundingClientRect();
+
+    if (pinch && pointers.size >= 2) {
+        const [p1, p2] = [...pointers.values()];
+        const dist = Math.hypot(p2.x - p1.x, p2.y - p1.y);
+        camera.scale = Math.max(0.3, Math.min(3, pinch.startScale * dist / pinch.startDist));
+        const size = 360 / camera.scale;
+        const midX = (p1.x + p2.x) / 2, midY = (p1.y + p2.y) / 2;
+        camera.x = pinch.world.x - (midX - rect.left) / rect.width * size;
+        camera.y = pinch.world.y - (midY - rect.top) / rect.height * size;
+        applyCamera();
+    } else if (dragging) {
+        moveDrag(e);
+    } else if (pan) {
+        const size = 360 / camera.scale;
+        camera.x = pan.camX - (e.clientX - pan.startX) / rect.width * size;
+        camera.y = pan.camY - (e.clientY - pan.startY) / rect.height * size;
+        applyCamera();
+    }
+}
+
+function onPointerUp(e) {
+    pointers.delete(e.pointerId);
+    if (pinch) {
+        if (pointers.size < 2) pinch = null;
+        if (pointers.size === 1) {
+            const [p] = [...pointers.values()];
+            pan = {
+                startX: p.x,
+                startY: p.y,
+                camX: camera.x,
+                camY: camera.y,
+            };
+        }
+        return;
+    }
+    if (dragging) endDrag();
+    if (pointers.size === 0) pan = null;
+}
+
 function resetLayout() {
   childrenOf(brainView).forEach(k => {
       delete k.x;
       delete k.y;
   });
+  resetCamera();
   saveBrain();
   showBrain();
 }
 
 const brainMap = document.getElementById("brainMap");
-brainMap.onpointermove = moveDrag;
-brainMap.onpointerup = endDrag;
-brainMap.onpointercancel = () => {
+brainMap.onpointerdown = onPointerDown;
+brainMap.onpointermove = onPointerMove;
+brainMap.onpointerup = onPointerUp;
+brainMap.onpointercancel = e => {
   if (dragging && dragging.moved) saveBrain();
   dragging = null;
+  onPointerUp(e);
 };
