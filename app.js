@@ -320,6 +320,7 @@ function setAfterOf(item, value) {
     other.after = item.id;
     if (item.after === other.id) item.after = null;
   }
+  if (menuItem) refreshMenu();
   saveBrain();
   showBrain(false);
 }
