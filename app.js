@@ -455,7 +455,6 @@ function showBrain(animate = true) {
           x: cx + R * Math.cos(angle),
           y: cy + R * Math.sin(angle),
       };
-      applyCamera();
   });
 
   // bubbles the lines avoid (center 1st, then each child)
@@ -518,6 +517,7 @@ function showBrain(animate = true) {
 
   showTips(center, kids);
   showTools(center);
+  applyCamera();
 }
 
 function showTips(center, kids) {
@@ -620,13 +620,13 @@ function endDrag() {
   else zoomIn(item.id);
 }
 
-function startPitch() {
+function startPinch() {
     const [p1, p2] = [...pointers.values()];
     const mid = {
         clientX: (p1.x + p2.x) / 2,
         clientY: (p1.y + p2.y) / 2,
     };
-    pitch = {
+    pinch = {
         startDist: Math.hypot(p2.x - p1.x, p2.y - p1.y),
         startScale: camera.scale,
         world: svgPoint(mid),
@@ -720,3 +720,5 @@ brainMap.onpointercancel = e => {
   dragging = null;
   onPointerUp(e);
 };
+
+document.addEventListener("gesturestart", e => e.preventDefault());
