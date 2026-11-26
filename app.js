@@ -13,6 +13,7 @@ let settings = JSON.parse(localStorage.getItem("settings")) || {
 };
 let brain = JSON.parse(localStorage.getItem("brain")) || [];
 let brainView = null;
+let dragging = null;
 
 function save() {
     localStorage.setItem("tasks", JSON.stringify(tasks));
@@ -367,22 +368,14 @@ function drawBubble(group, item, x, y, r, isCenter) {
     t.textContent = Math.round(p * 100) + "%";
   }
 
-  g.onclick = () => {
-    if (isCenter) zoomOut();
-    else if (item.type === "step") {
-        item.done = !item.done;
-        saveBrain();
-        showBrain();
-    }
-    else zoomIn(item.id);
-  };
+  g.onpointerdown = e => startDrag(e, item, isCenter);
 }
 
-function showBrain() {
+function showBrain(animate = true) {
   const map = document.getElementById("brainMap");
   map.innerHTML = "";
   const group = svgEl("g", {
-      class: "zoom",
+      class: animate ? "zoom" : "",
   }, map);
 
   const center = brainView === null ? null : findBubble(brainView);
@@ -390,11 +383,15 @@ function showBrain() {
   const cx = 180, cy = 180, R = 120;
 
   const spots = kids.map((k, i) => {
-    const angle = -Math.PI / 2 + i * 2 * Math.PI / kids.length;
-    return {
-        x: cx + R * Math.cos(angle),
-        y: cy + R * Math.sin(angle),
-    };
+      if (k.x != null) return {
+          x: k.x,
+          y: k.y,
+      };
+      const angle = -Math.PI / 2 + i * 2 * Math.PI / kids.length;
+      return {
+          x: cx + R * Math.cos(angle),
+          y: cy + R * Math.sin(angle),
+      };
   });
 
   // branches from the center
@@ -474,3 +471,71 @@ function showTools(center) {
     select.appendChild(option);
   });
 }
+
+// brain: dragging
+function svgPoint(e) {
+  const rect = document.getElementById("brainMap").getBoundingClientRect();
+  return {
+    x: (e.clientX - rect.left) / rect.width * 360,
+    y: (e.clientY - rect.top) / rect.height * 360
+  };
+}
+
+function startDrag(e, item, isCenter) {
+  document.getElementById("brainMap").setPointerCapture(e.pointerId);
+  const pt = svgPoint(e);
+  dragging = {
+      item,
+      isCenter,
+      startX: pt.x,
+      startY: pt.y,
+      moved: false,
+  };
+}
+
+function moveDrag(e) {
+  if (!dragging || dragging.isCenter) return;
+  const pt = svgPoint(e);
+  if (Math.hypot(pt.x - dragging.startX, pt.y - dragging.startY) > 6) dragging.moved = true;
+  if (!dragging.moved) return;
+  dragging.item.x = Math.max(40, Math.min(320, pt.x));
+  dragging.item.y = Math.max(40, Math.min(320, pt.y));
+  showBrain(false);
+}
+function endDrag() {
+  if (!dragging) return;
+  const {
+      item,
+      isCenter,
+      moved,
+  } = dragging;
+  dragging = null;
+  if (moved) {
+      saveBrain();
+      return;
+  }
+  if (isCenter) zoomOut();
+  else if (item.type === "step") {
+      item.done = !item.done;
+      saveBrain();
+      showBrain();
+  }
+  else zoomIn(item.id);
+}
+
+function resetLayout() {
+  childrenOf(brainView).forEach(k => {
+      delete k.x;
+      delete k.y;
+  });
+  saveBrain();
+  showBrain();
+}
+
+const brainMap = document.getElementById("brainMap");
+brainMap.onpointermove = moveDrag;
+brainMap.onpointerup = endDrag;
+brainMap.onpointercancel = () => {
+  if (dragging && dragging.moved) saveBrain();
+  dragging = null;
+};
