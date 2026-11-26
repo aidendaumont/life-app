@@ -78,6 +78,14 @@
     </div>
     <div id="bubbleMenu">
       <div id="menuTitle"></div>
+      <label class="setting">
+        <span>Must do first</span>
+        <select id="menuFirst" onchange="setFirst(menuItem, this.value)"></select>
+      </label>
+      <label class="setting">
+        <span>Must do after</span>
+        <select id="menuAfter" onchange="setAfterOf(menuItem, this.value)"></select>
+      </label>
       <button onclick="menuAddStep()">Add a step</button>
       <button onclick="menuRename()">Rename</button>
       <button class="danger" onclick="menuDelete()">Delete</button>
