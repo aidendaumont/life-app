@@ -365,12 +365,23 @@ function refreshMenu() {
   fillOrderSelects(menuItem, "menuFirst", "menuAfter");
   document.getElementById("menuMainRow").style.display = menuItem.after != null ? "" : "none";
   document.getElementById("menuMainToggle").checked = !!menuItem.hideMain;
+  document.getElementById("menuOutsideRow").style.display = menuItem.parent !== null && menuItem.type !== "goal" ? "" : "none";
+  document.getElementById("menuOutsideToggle").checked = !!menuItem.outside;
 }
 
 function setHideMain(item, value) {
   item.hideMain = value;
   saveBrain();
   showBrain(false);
+}
+
+function setOutside(item, value) {
+    item.outside = value;
+    delete item.ox;
+    delete item.oy;
+    saveBrain();
+    if (!value) closeMenu();
+    showBrain(false);
 }
 
 function closeMenu() {
@@ -390,7 +401,7 @@ function menuDelete() {
   removeBubble(item.id);
 }
 
-function menuAddStep() {
+function menuAddStep(outside) {
   const item = menuItem;
   closeMenu();
   const name = prompt(`New step for "${item.text}":`);
@@ -402,7 +413,7 @@ function menuAddStep() {
     parent: item.id,
     done: false,
     after: null,
-    outside: true
+    outside: outside,
   });
   saveBrain();
   showBrain(false);
