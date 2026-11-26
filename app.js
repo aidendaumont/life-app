@@ -550,7 +550,7 @@ function findPath(a, b, obstacles) {
       obstacles.forEach(o => {
         const d = Math.hypot(x - o.x, y - o.y);
         if (d < o.r) price += 80;
-        else if (d < o.r + 28) price += (o.r + 28 - d) / 28 * 4;
+        else if (d < o.r + 20) price += (o.r + 20 - d) / 20 * 4;
       });
       cost[r * cols + c] = price;
     }
@@ -752,7 +752,7 @@ function showBrain(animate = true) {
   const obstacles = mapNodes.map(n => ({
       x: n.x,
       y: n.y,
-      r: n.r + 18,
+      r: n.r + 12,
   }));
   const centerNode = mapNodes[0];
   const nodeOf = id => mapNodes.find(n => n.item && n.item.id === id);
