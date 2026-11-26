@@ -345,42 +345,64 @@ function smoothPath(points) {
   return d;
 }
 
+// start as smooth arc ("base" shape)
 function routeLine(a, b, obstacles, bow) {
+  const N = 24;
   const dx = b.x - a.x, dy = b.y - a.y;
-  const len2 = dx * dx + dy * dy;
-  if (len2 === 0) return "";
-  const len = Math.sqrt(len2);
+  const len = Math.hypot(dx, dy);
+  if (len === 0) return "";
   const nx = -dy / len, ny = dx / len;
-  const waypoints = [];
 
-  obstacles.forEach(o => {
-    const t = ((o.x - a.x) * dx + (o.y - a.y) * dy) / len2;
-    if (t <= 0 || t >= 1) return;
-    const px = a.x + dx * t, py = a.y + dy * t;
-    const dist = Math.hypot(px - o.x, py - o.y);
-    if (dist >= o.r) return;
-    let ux = nx, uy = ny;
-    if (dist > 1) {
-        ux = (px - o.x) / dist;
-        uy = (py - o.y) / dist;
-    }
-    waypoints.push({
-        t,
-        x: o.x + ux * o.r,
-        y: o.y + uy * o.r,
-    });
-  });
-
-  if (waypoints.length === 0) {
-    waypoints.push({
-        t: 0.5,
-        x: a.x + dx / 2 + nx * bow * len,
-        y: a.y + dy / 2 + ny * bow * len,
+  const base = [];
+  for (let i = 0; i <= N; i++) {
+    const t = i / N;
+    const bend = Math.sin(Math.PI * t) * bow * len;
+    base.push({
+        x: a.x + dx * t + nx * bend,
+        y: a.y + dy * t + ny * bend,
     });
   }
+  const pts = base.map(p => ({
+      x: p.x,
+      y: p.y,
+  }));
 
-  waypoints.sort((p, q) => p.t - q.t);
-  return smoothPath([a, ...waypoints, b]);
+  // each bubble gets ONE side for the line to pass on
+  const sides = obstacles.map(o => {
+    const s = Math.sign((o.x - a.x) * nx + (o.y - a.y) * ny);
+    return s === 0 ? (Math.sign(bow) || 1) : -s;
+  });
+  
+  function pushOut() {
+    for (let i = 1; i < N; i++) {
+      const p = pts[i];
+      obstacles.forEach((o, k) => {
+        const qx = p.x - o.x, qy = p.y - o.y;
+        if (qx * qx + qy * qy >= o.r * o.r) return;
+        const mx = nx * sides[k], my = ny * sides[k];
+        const along = qx * mx + qy * my;
+        const push = -along + Math.sqrt(along * along - (qx * qx + qy * qy - o.r * o.r));
+        p.x += mx * push;
+        p.y += my * push;
+      });
+    }
+  }
+
+  // rubber band: push out of bubbles, smooth, repeat
+  for (let round = 0; round < 40; round++) {
+    pushOut();
+    const moved = pts.map((p, i) => ({
+        x: p.x - base[i].x,
+        y: p.y - base[i].y,
+    }));
+    for (let i = 1; i < N; i++) {
+      pts[i].x = base[i].x + (moved[i - 1].x + moved[i].x * 2 + moved[i + 1].x) / 4;
+      pts[i].y = base[i].y + (moved[i - 1].y + moved[i].y * 2 + moved[i + 1].y) / 4;
+    }
+  }
+  pushOut();
+
+  return smoothPath(pts);
 }
 
 function drawBubble(group, item, x, y, r, isCenter) {
@@ -461,12 +483,12 @@ function showBrain(animate = true) {
   const obstacles = [{
         x: cx,
         y: cy,
-        r: 60,
+        r: 68,
     },
     ...spots.map(s => ({
         x: s.x,
         y: s.y,
-        r: 50,
+        r: 56,
     }))
   ];
 
