@@ -1,10 +1,4 @@
-/* ==============================================================
-   🧠 BRAIN CONSOLE  —  console.css
-   The colors come from the theme in console.js
-   (they arrive here as --con-text, --con-bg, --con-prompt, etc.)
-   ============================================================== */
-
-/* ---------- the "Open brain console" button in Settings ---------- */
+/* "Open brain console" button in Settings */
 #openConsole {
   display: block;
   width: 100%;
@@ -20,9 +14,9 @@
   margin-right: 6px;
 }
 
-/* ---------- the full-screen console ---------- */
+/* full-screen console */
 #console {
-  /* backup colors (the theme in console.js replaces these) */
+  /* backup colors (theme in console.js replaces) */
   --con-bg: #000000;
   --con-text: #e5e7eb;
   --con-prompt: #4ade80;
@@ -57,7 +51,7 @@
   display: flex;
 }
 
-/* ---------- top bar (title, help, EXIT) ---------- */
+/* top bar (title, help, exit) */
 .con-top {
   display: flex;
   align-items: center;
@@ -93,7 +87,7 @@
   font-weight: 700;
 }
 
-/* ---------- where the text shows up ---------- */
+/* where the text shows up */
 .con-out {
   flex: 1;
   min-height: 0;
@@ -111,7 +105,7 @@
   color: var(--con-text);
 }
 
-/* ---------- quick buttons (help, look, back...) ---------- */
+/* quick buttons (help, look, back...) */
 .con-chips {
   display: flex;
   gap: 8px;
@@ -139,7 +133,7 @@
   font-weight: 700;
 }
 
-/* ---------- the typing row ---------- */
+/* typing row */
 .con-input-row {
   display: flex;
   align-items: center;
@@ -178,7 +172,7 @@
   font-weight: 700;
 }
 
-/* ---------- color coding ---------- */
+/* color coding */
 .k-text    { color: var(--con-text); }
 .k-prompt  { color: var(--con-prompt); font-weight: 700; }
 .k-command { color: var(--con-command); font-weight: 700; }
@@ -196,4 +190,48 @@
   padding: 2px 8px;
   border-radius: 6px;
   border: 1px solid rgba(128, 128, 128, 0.5);
+}
+
+/* map button (top bar) */
+#console .con-map {
+  background: transparent;
+  color: var(--con-good);
+  border: 1px solid var(--con-good);
+  border-radius: 10px;
+  padding: 8px 12px;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+/* commands shown in box, like `look` */
+.con-code {
+  background: rgba(128, 128, 128, 0.22);
+  border: 1px solid rgba(128, 128, 128, 0.45);
+  border-radius: 6px;
+  padding: 0 5px;
+  white-space: nowrap;
+}
+
+/* ">_ Back to console" button on map */
+.con-back {
+  display: none;
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  top: calc(max(12px, env(safe-area-inset-top)) + 56px);
+  z-index: 900;
+  background: #000;
+  color: #4ade80;
+  border: 2px solid #4ade80;
+  border-radius: 999px;
+  padding: 10px 16px;
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 15px;
+  font-weight: 700;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6);
+  white-space: nowrap;
+}
+.con-back.show {
+  display: block;
 }
