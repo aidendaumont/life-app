@@ -298,3 +298,54 @@ li small {
 #bubbleFull.open {
   display: block;
 }
+#brain.active {
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 92px;
+  padding: 12px 16px;
+  padding-top: max(12px, env(safe-area-inset-top));
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+#brainMap {
+  flex: 1;
+  min-height: 0;
+  height: 100%;
+}
+
+#bubbleFull {
+  max-height: 25vh;
+  overflow-y: auto;
+}
+
+.brain-add {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+#brain .brain-add input {
+  flex: 1;
+  min-width: 0;
+  width: auto;
+  margin-top: 0;
+}
+#brain .brain-add select {
+  margin-top: 0;
+}
+
+#toolsToggle {
+  background: var(--card);
+  margin-top: 8px;
+  font-size: 14px;
+}
+#bubbleTools {
+  display: none;
+}
+#bubbleTools.open {
+  display: block;
+}
