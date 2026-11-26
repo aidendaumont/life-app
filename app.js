@@ -503,7 +503,7 @@ function findPath(a, b, obstacles) {
   };
 
   // 4. smooth out the "staircase" into one soft curve
-  for (let pass = 0; pass < 10; pass++) {
+  for (let pass = 0; pass < 20; pass++) {
     path = path.map((p, k) => {
       if (k === 0 || k === path.length - 1) return p;
       return {
