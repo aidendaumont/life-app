@@ -26,6 +26,7 @@ let pressTimer = null;
 let mapNodes = [];
 let attachTimer = null;
 let hoverKey = null;
+let menuItem = null;
 
 function save() {
     localStorage.setItem("tasks", JSON.stringify(tasks));
@@ -221,15 +222,19 @@ function progress(id) {
   if (kids.length === 0) return null;
   let total = 0;
   kids.forEach(k => {
-    if (k.type === "step") total += k.done ? 1 : 0;
-    else total += progress(k.id) || 0;
+      total += score(k);
   });
   return total / kids.length;
 }
 
+function score(b) {
+  const p = progress(b.id);
+  if (b.type === "step" && p === null) return b.done ? 1 : 0;
+  return p || 0;
+}
+
 function isFinished(bubble) {
-  if (bubble.type === "step") return bubble.done;
-  return progress(bubble.id) === 1;
+  return score(bubble) === 1;
 }
 
 
@@ -288,25 +293,77 @@ function setAfter() {
   showBrain();
 }
 
-function deleteBubble() {
-  if (brainView === null) return;
-  if (!confirm("Delete this bubble and everything inside it?")) return;
-  const doomed = [brainView];
+function removeBubble(id) {
+  const target = findBubble(id);
+  if (!target) return;
+  if (!confirm(`Delete "${target.text}" and everything inside it?`)) return;
+  const doomed = [id];
   for (let i = 0; i < doomed.length; i++) {
     childrenOf(doomed[i]).forEach(k => doomed.push(k.id));
   }
-  const parent = findBubble(brainView).parent;
   brain = brain.filter(b => !doomed.includes(b.id));
   brain.forEach(b => {
-      if (doomed.includes(b.after)) b.after = null;
+    if (doomed.includes(b.after)) b.after = null;
+    if (doomed.includes(b.attach)) b.attach = null;
   });
-  brain.forEach(b => {
-      if (doomed.includes(b.attach)) b.attach = null;
-  });
-  brainView = parent;
+  if (doomed.includes(brainView)) brainView = target.parent;
   saveBrain();
   showBrain();
 }
+
+function deleteBubble() {
+  if (brainView !== null) removeBubble(brainView);
+}
+
+
+
+// brain: bubble menu
+
+function openMenu(item) {
+  pointers.clear();
+  pan = null;
+  dragging = null;
+  menuItem = item;
+  document.getElementById("menuTitle").textContent = item.text;
+  document.getElementById("bubbleMenu").classList.add("open");
+}
+
+function closeMenu() {
+  menuItem = null;
+  document.getElementById("bubbleMenu").classList.remove("open");
+}
+
+function menuRename() {
+  const item = menuItem;
+  closeMenu();
+  renameBubble(item);
+}
+
+function menuDelete() {
+  const item = menuItem;
+  closeMenu();
+  removeBubble(item.id);
+}
+
+function menuAddStep() {
+  const item = menuItem;
+  closeMenu();
+  const name = prompt(`New step for "${item.text}":`);
+  if (name === null || name.trim() === "") return;
+  brain.push({
+    id: Date.now(),
+    text: name.trim(),
+    type: "step",
+    parent: item.id,
+    done: false,
+    after: null,
+    outside: true
+  });
+  saveBrain();
+  showBrain(false);
+}
+
+
 
 // brain: drawing
 
@@ -534,6 +591,7 @@ function drawBubble(group, node) {
   } = node;
   const p = item ? progress(item.id) : null;
   const type = item ? item.type : "goal";
+  const finished = item && item.type === "step" && isFinished(item);
 
   if (p !== null) {
     const ringR = r + 5;
@@ -552,7 +610,7 @@ function drawBubble(group, node) {
   }
 
   let cls = "bubble " + type;
-  if (item && item.done) cls += " done";
+  if (finished) cls += " done";
   if (hoverKey !== null && hoverKey === keyOf(node)) cls += " target";
   const g = svgEl("g", {
       class: cls,
@@ -563,7 +621,7 @@ function drawBubble(group, node) {
       r: r,
   }, g);
 
-  const label = item ? (item.done ? "✓ " : "") + item.text : "My brain";
+  const label = item ? (finished ? "✓ " : "") + item.text : "My brain";
   const lines = wrapText(label, isCenter ? 12 : r < 35 ? 8 : 10);
   const shift = p !== null ? 6 : 0;
   lines.forEach((line, i) => {
@@ -620,7 +678,6 @@ function showBrain(animate = true) {
   const queue = mapNodes.slice(1);
   while (queue.length > 0) {
     const anchor = queue.shift();
-    if (anchor.satellite) continue;
     const hangers = [
       ...kids.filter(k => k.attach === anchor.item.id).map(item => ({
           item,
@@ -800,7 +857,7 @@ function startDrag(e, node) {
     pressTimer = setTimeout(() => {
       if (dragging && !dragging.moved) {
         dragging = null;
-        renameBubble(node.item);
+        openMenu(node.item);
       }
     }, 500);
   }
@@ -841,7 +898,7 @@ function endDrag() {
     return;
   }
   if (isCenter) zoomOut();
-  else if (item.type === "step") {
+  else if (item.type === "step" && progress(item.id) === null) {
     item.done = !item.done;
     saveBrain();
     showBrain();
@@ -1022,6 +1079,14 @@ function makesLoop(item, target) {
   }
   return false;
 }
+function isInside(target, item) {
+    let b = target;
+    for (let i = 0; i < 100 && b; i++) {
+        if (b.id === item.id) return true;
+        b = findBubble(b.parent);
+    }
+    return false;
+}
 
 function attachTo(item, wasSatellite, target) {
   hoverKey = null;
@@ -1032,16 +1097,17 @@ function attachTo(item, wasSatellite, target) {
       item.parent = brainView;
       item.outside = false;
     }
-  } else if (target.satellite || target.item.type === "step") {
-    showBrain(false);
-    return;
   } else if (item.type === "goal") {
-    if (makesLoop(item, target.item)) {
-        showBrain(false);
-        return;
+    if (target.satellite || target.item.type === "step" || makesLoop(item, target.item)) {
+      showBrain(false);
+      return;
     }
     item.attach = target.item.id;
   } else {
+    if (isInside(target.item, item)) {
+      showBrain(false);
+      return;
+    }
     item.parent = target.item.id;
     item.outside = true;
     item.attach = null;
