@@ -700,11 +700,11 @@ function showTips(center, kids) {
   const tips = [];
   kids.forEach(k => {
     const first = findBubble(k.after);
-    if (first && !isFinished(first)) tips.push(`💡 Finish ${first.text} first. It'll make ${k.text} easier.`);
+    if (first && !isFinished(first)) tips.push(`💡 ${first.text} before ${k.text}`);
   });
   if (center) {
     const first = findBubble(center.after);
-    if (first && !isFinished(first)) tips.push(`⚠️ ${first.text} should come before this.`);
+    if (first && !isFinished(first)) tips.push(`⚠️ Do ${first.text} first`);
   }
   tips.forEach(text => {
     const div = document.createElement("div");
@@ -712,6 +712,13 @@ function showTips(center, kids) {
     div.textContent = text;
     box.appendChild(div);
   });
+  const btn = document.getElementById("tipsToggle");
+  btn.style.display = tips.length ? "" : "none";
+  btn.textContent = "💡 " + tips.length;
+}
+
+function toggleTips() {
+    document.getElementById("brainTips").classList.toggle("open");
 }
 
 function showTools(center) {
