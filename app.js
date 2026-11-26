@@ -652,7 +652,7 @@ function showBrain(animate = true) {
   mapNodes.slice(1).forEach(n => {
     const lineFrom = n.anchor || centerNode;
     const mustFirst = n.item.after != null && nodeOf(n.item.after) === lineFrom;
-    linkLine(lineFrom, n, mustFirst ? 0.18 : 0.1, "branch");
+    if (!mustFirst) linkLine(lineFrom, n, 0.1, "branch");
     if (n.anchor && n.item.alsoCenter) linkLine(centerNode, n, 0.1, "branch");
   });
 
@@ -661,7 +661,7 @@ function showBrain(animate = true) {
     const first = n.item.after != null ? nodeOf(n.item.after) : null;
     if (!first) return;
     const sameAsLine = first === (n.anchor || centerNode);
-    const path = linkLine(first, n, sameAsLine ? -0.18 : 0.2, "need-line");
+    const path = linkLine(first, n, sameAsLine ? 0.1 : 0.2, "need-line");
     drawArrows(group, path);
   });
 
