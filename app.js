@@ -270,8 +270,9 @@ function addBubble() {
   input.value = "";
   saveBrain();
   showBrain();
+}
 
-  function renameBubble(item) {
+function renameBubble(item) {
       pointers.clear();
       pan = null;
       const name = prompt("Rename bubble:", item.text);
@@ -286,7 +287,6 @@ function addBubble() {
         if (brainView === null) return;
         renameBubble(findBubble(brainView));
     }
-}
 
 function zoomIn(id) {
     brainView = id;
