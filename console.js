@@ -229,7 +229,11 @@ let histPos = 0;             // where the ↑ ↓ keys are in that list
 const undoList = [];
 const redoList = [];
 const LOOKUP = {};           // command word -> command (filled in at start)
-let appearance = { theme: "classic", custom: {}, size: DEFAULT_SIZE };
+let appearance = {
+  theme: "classic",
+  custom: {},
+  size: DEFAULT_SIZE
+};
 let box, out, input, promptEl, chipsEl, openBtn;
 
    
@@ -254,7 +258,9 @@ const COMMANDS = [
     examples: [["look", "see what's inside here"], ["look Spanish", "see what's inside Spanish"]],
     run(text) {
       const where = text.replace(/(^|\s)-[a-z]+(?=\s|$)/gi, " ").trim().replace(/^(at|in|inside|into)\s+/i, "");
-      const place = where ? findPlace(where) : { id: cwd };
+      const place = where ? findPlace(where) : {
+        id: cwd
+      };
       if (place.error) return showError(place);
       listInside(place.id);
     },
@@ -294,7 +300,9 @@ const COMMANDS = [
     level: "basic", group: "Moving around",
     about: "go to the very top of your brain",
     examples: [["home", "go to the very top"]],
-    run() { goTo(null); },
+    run() {
+      goTo(null);
+    },
   },
   {
     names: ["where", "pwd", "whereami"],
@@ -312,7 +320,9 @@ const COMMANDS = [
     about: "close the console and show this spot on your brain map",
     examples: [["map", "see where you are on your brain map"], ["map Spanish", "see Spanish on your map"]],
     run(text) {
-      const place = text.trim() ? findPlace(text) : { id: cwd };
+      const place = text.trim() ? findPlace(text) : {
+        id: cwd
+      };
       if (place.error) return showError(place);
       brainView = place.id;
       changedSinceMap = false;
@@ -341,7 +351,9 @@ const COMMANDS = [
       "If something is already there, I'll show you what's in it and ask what to do.",
       "If a name has the words to, in or with in it, use quotes: add \"Talk to mom\"",
     ],
-    run(text) { addCommand(text); },
+    run(text) {
+      addCommand(text);
+    },
   },
 
   // ------ changing ------
@@ -354,21 +366,27 @@ const COMMANDS = [
       ["done Section 1", "checks off everything inside Section 1"],
       ["done all", "checks off everything here"],
     ],
-    run(text) { setDone(text, true); },
+    run(text) {
+      setDone(text, true);
+    },
   },
   {
     names: ["undone", "uncheck", "untick", "notdone"],
     level: "basic", group: "Changing",
     about: "take the checkmark off steps",
     examples: [["undone Unit 3 in Section 1", "takes the checkmark off"]],
-    run(text) { setDone(text, false); },
+    run(text) {
+      setDone(text, false);
+    },
   },
   {
     names: ["rename", "rn"],
     level: "basic", group: "Changing",
     about: "change a bubble's name",
     examples: [["rename Section 1 to Basics", "Section 1 is now called Basics"], ["rename Unit 1-3 to Lesson 1-3", "renames 3 at once"]],
-    run(text) { renameCommand(text); },
+    run(text) {
+      renameCommand(text);
+    },
   },
   {
     names: ["copy", "cp", "duplicate", "clone"],
@@ -383,7 +401,9 @@ const COMMANDS = [
       "Copies start un-checked, so your progress isn't copied.",
       "If you copy ONE bubble that has things inside, I'll ask if you want the bubble itself or just what's inside it.",
     ],
-    run(text) { copyCommand(text); },
+    run(text) {
+      copyCommand(text);
+    },
   },
   {
     names: ["delete", "rm", "remove", "del", "rmdir", "erase", "trash"],
@@ -396,7 +416,9 @@ const COMMANDS = [
       ["rm -f Section 3", "deletes without asking (careful!)"],
     ],
     notes: ["I always show you what will be deleted and ask first. Type yes to go ahead.", "Deleted something by mistake? Type undo."],
-    run(text) { deleteCommand(text); },
+    run(text) {
+      deleteCommand(text);
+    },
   },
   {
     names: ["undo", "oops", "u"],
@@ -404,14 +426,18 @@ const COMMANDS = [
     about: "take back the last change",
     examples: [["undo", "take back the last change"]],
     notes: ["I remember your last " + UNDO_LIMIT + " changes.", "redo puts back what undo took away."],
-    run() { doUndo(); },
+    run() {
+      doUndo();
+    },
   },
   {
     names: ["redo"],
     level: "advanced", group: "Changing",
     about: "put back what undo took away",
     examples: [["redo", "does the change again"]],
-    run() { doRedo(); },
+    run() {
+      doRedo();
+    },
   },
 
   // ------ organizing (advanced) ------
@@ -420,14 +446,18 @@ const COMMANDS = [
     level: "advanced", group: "Organizing",
     about: "move bubbles into another bubble",
     examples: [["move Unit 9-10 to Section 2", "moves them inside Section 2"], ["move Grammar to ~", "moves it to the very top (~ = home)"]],
-    run(text) { moveCommand(text, false); },
+    run(text) {
+      moveCommand(text, false);
+    },
   },
   {
     names: ["mv"],
     level: "advanced", group: "Organizing",
     about: "Linux mv: moves into a bubble if it exists, otherwise renames",
     examples: [["mv Unit 1 to Section 2", "moves Unit 1 into Section 2"], ["mv Unit 1 to Lesson 1", "renames it (no Lesson 1 exists)"], ["mv \"Unit 1\" \"Section 2\"", "quotes work too"]],
-    run(text) { moveCommand(text, true); },
+    run(text) {
+      moveCommand(text, true);
+    },
   },
   {
     names: ["order", "chain"],
@@ -452,7 +482,10 @@ const COMMANDS = [
     run(text) {
       const r = resolveItems(text);
       if (r.error) return showError(r);
-      change("unorder", () => r.items.forEach(b => { b.after = null; b.hideMain = false; }));
+      change("unorder", () => r.items.forEach(b => {
+        b.after = null;
+        b.hideMain = false;
+      }));
       say(ok("✓ Removed the arrows from ") + num(r.items.length) + " " + plural("bubble", r.items.length));
     },
   },
@@ -467,7 +500,9 @@ const COMMANDS = [
       const hide = /^(off|hide)$/i.test(m[1]);
       const r = resolveItems(m[2]);
       if (r.error) return showError(r);
-      change("lines " + m[1].toLowerCase(), () => r.items.forEach(b => { b.hideMain = hide; }));
+      change("lines " + m[1].toLowerCase(), () => r.items.forEach(b => {
+        b.hideMain = hide;
+      }));
       say(ok("✓ Main lines ") + (hide ? "hidden" : "showing") + " for " + num(r.items.length) + " " + plural("bubble", r.items.length));
       const noArrow = r.items.filter(b => b.after == null).length;
       if (hide && noArrow) say(dim(`(${noArrow} of them have no blue arrow, so their main line stays.)`));
@@ -478,14 +513,18 @@ const COMMANDS = [
     level: "advanced", group: "Organizing",
     about: "show sub-steps outside on the map (hanging off their bubble)",
     examples: [["outside Unit 1-10 in Section 1", "they hang off Section 1 on the map"], ["outside all in Section 1", "everything in Section 1"]],
-    run(text) { setOutside(text, true); },
+    run(text) {
+      setOutside(text, true);
+    },
   },
   {
     names: ["inside"],
     level: "advanced", group: "Organizing",
     about: "hide sub-steps inside their bubble (tap it on the map to see them)",
     examples: [["inside Unit 1-10 in Section 1", "they only show when you tap Section 1"]],
-    run(text) { setOutside(text, false); },
+    run(text) {
+      setOutside(text, false);
+    },
   },
   {
     names: ["turn", "type"],
@@ -498,7 +537,9 @@ const COMMANDS = [
       const r = resolveItems(m[1]);
       if (r.error) return showError(r);
       const type = m[2].toLowerCase();
-      change("turn into " + type, () => r.items.forEach(b => { b.type = type; }));
+      change("turn into " + type, () => r.items.forEach(b => {
+        b.type = type;
+      }));
       say(ok("✓ ") + num(r.items.length) + " " + plural("bubble", r.items.length) + " turned into " + (r.items.length === 1 ? "a " + type : type + "s"));
     },
   },
@@ -512,9 +553,17 @@ const COMMANDS = [
     run(text) {
       let t = text.trim(), depth = 99;
       const L = t.match(/(?:^|\s)-L\s*(\d+)/i);
-      if (L) { depth = Number(L[1]); t = t.replace(L[0], " ").trim(); }
-      else if (/^\d+$/.test(t)) { depth = Number(t); t = ""; }
-      const place = t ? findPlace(t) : { id: cwd };
+      if (L) {
+        depth = Number(L[1]);
+        t = t.replace(L[0], " ").trim();
+      }
+      else if (/^\d+$/.test(t)) {
+        depth = Number(t);
+        t = "";
+      }
+      const place = t ? findPlace(t) : {
+        id: cwd
+      };
       if (place.error) return showError(place);
       showTree(place.id, Math.max(1, depth));
     },
@@ -530,7 +579,9 @@ const COMMANDS = [
       const hits = brain.filter(b => norm(b.text).includes(q));
       if (!hits.length) return say(dim("Nothing found for ") + nm(text.trim()));
       say(dim(`Found ${hits.length}:`));
-      hits.sort((a, b) => pathText(a.id).localeCompare(pathText(b.id), undefined, { numeric: true }));
+      hits.sort((a, b) => pathText(a.id).localeCompare(pathText(b.id), undefined, {
+        numeric: true
+      }));
       hits.slice(0, 50).forEach(b => say("  " + icon(b) + " " + nm(b.text) + dim("  in ") + pl(pathText(b.parent))));
       if (hits.length > 50) say(dim(`...and ${hits.length - 50} more`));
     },
@@ -688,35 +739,45 @@ const COMMANDS = [
     level: "basic", group: "Other",
     about: "clean the screen",
     examples: [["clear", "clean the screen"]],
-    run() { out.innerHTML = ""; },
+    run() {
+      out.innerHTML = "";
+    },
   },
   {
     names: ["exit", "quit", "close", "bye", "logout", "q"],
     level: "basic", group: "Other",
     about: "leave the console",
     examples: [["exit", "leave the console (or tap ✕ Exit at the top)"]],
-    run() { closeConsole(); },
+    run() {
+      closeConsole();
+    },
   },
   {
     names: ["echo", "print"],
     level: "advanced", group: "Other",
     about: "prints whatever you type",
     examples: [["echo hi!", "prints hi!"]],
-    run(text) { say(esc(text)); },
+    run(text) {
+      say(esc(text));
+    },
   },
   {
     names: ["date", "time"],
     level: "advanced", group: "Other",
     about: "shows today's date and time",
     examples: [["date", "today's date and time"]],
-    run() { say(esc(new Date().toLocaleString())); },
+    run() {
+      say(esc(new Date().toLocaleString()));
+    },
   },
   {
     names: ["whoami"],
     level: "advanced", group: "Other",
     about: "tells you who you are",
     examples: [["whoami", "find out 🙂"]],
-    run() { say("You. The boss of this brain. 🧠"); },
+    run() {
+      say("You. The boss of this brain. 🧠");
+    },
   },
 ];
 
@@ -964,7 +1025,10 @@ const TUTORIALS = {
       {
         say: () => ["`cp` copies bubbles AND everything inside them. Copy-paste, but cooler:"],
         type: () => "cp Level 1-2 to Backup",
-        done: s => { const b = childByName(s.box, "Backup"); return !!b && childrenOf(b.id).length >= 2; },
+        done: s => {
+          const b = childByName(s.box, "Backup");
+          return !!b && childrenOf(b.id).length >= 2;
+        },
       },
       {
         say: () => ["`mv` moves a bubble INTO another one, if that one exists.", "Saved doesn't exist, so `mv` just renames it instead. Linux does the same thing, yk:"],
@@ -974,7 +1038,10 @@ const TUTORIALS = {
       {
         say: () => ["`;` lets you run 2 commands at once. Efficiency. 📈", "Also, `done` on a bubble checks off EVERYTHING inside it:"],
         type: () => "done Level 1; ls",
-        done: s => { const l = childByName(s.box, "Level 1"); return s.cmd === "look" && !!l && isFinished(l); },
+        done: s => {
+          const l = childByName(s.box, "Level 1");
+          return s.cmd === "look" && !!l && isFinished(l);
+        },
       },
       {
         say: () => ["`history` shows everything you've typed. No secrets here.", "`!!` runs your last command again, and `!5` runs command number 5."],
@@ -1002,7 +1069,12 @@ function startTutorial(kind) {
   const sandbox = makeBubble(null, name, "goal", false);
   saveBrain();
   refreshMap();
-  tut = { kind, step: 0, box: sandbox.id, name };
+  tut = {
+    kind,
+    step: 0,
+    box: sandbox.id,
+    name
+  };
   prevCwd = cwd;
   cwd = null;
   say("");
@@ -1031,7 +1103,14 @@ function tutorialCheck(typedSomething) {
   if (!tut || pending) return;
   const step = TUTORIALS[tut.kind].steps[tut.step];
   let passed = false;
-  try { passed = step.done({ cmd: lastCmd, box: tut.box }); } catch (e) { passed = false; }
+  try {
+    passed = step.done({
+      cmd: lastCmd,
+      box: tut.box
+    });
+  } catch (e) {
+    passed = false;
+  }
   if (passed) {
     say(ok(PRAISE[Math.floor(Math.random() * PRAISE.length)]));
     nextStep();
@@ -1071,7 +1150,10 @@ function stopTutorial() {
 // ------ add ------
 function addCommand(text) {
   if (!text.trim()) return say(bad("Add what? Try: ") + highlight("add Section 1-3"));
-  const flags = { outside: false, inOrder: false };
+  const flags = {
+    outside: false,
+    inOrder: false
+  };
   let rest = grabFlags(text, flags);
 
   // 1. where do they go?  "... to Section 1-8"
@@ -1095,7 +1177,10 @@ function addCommand(text) {
   // 2. "with" = also make things inside each new one
   let subText = null;
   const w = splitAt(rest, ["with"], false);
-  if (w) { rest = w.left; subText = grabFlags(w.right, flags); }
+  if (w) {
+    rest = w.left;
+    subText = grabFlags(w.right, flags);
+  }
   rest = grabFlags(rest, flags);
 
   // 3. read the names (ranges, lists, types)
@@ -1108,7 +1193,9 @@ function addCommand(text) {
       subs = expandNames(s.spec);
       subType = s.type;
     }
-  } catch (e) { return say(bad(e.message)); }
+  } catch (e) {
+    return say(bad(e.message));
+  }
   if (!names.length || (subs && !subs.length)) return say(bad("Add what? Try: ") + highlight("add Section 1-3"));
 
   const total = targets.length * names.length * (1 + (subs ? subs.length : 0));
@@ -1118,7 +1205,15 @@ function addCommand(text) {
   }
 
   // 4. is any of it already there?
-  const plan = { targets, names, type: main.type, subs, subType, outside: flags.outside, inOrder: flags.inOrder };
+  const plan = {
+    targets,
+    names,
+    type: main.type,
+    subs,
+    subType,
+    outside: flags.outside,
+    inOrder: flags.inOrder
+  };
   const dups = [];
   targets.forEach(t => names.forEach(n => {
     const old = childByName(t, n);
@@ -1138,17 +1233,30 @@ function doAdd(plan, mode) {
       plan.names.forEach(n => {
         let item = childByName(t, n);
         let name = n;
-        if (item && mode === "replace") { removeDeep(item.id); replaced++; item = null; }
-        else if (item && mode === "new") { item = null; name = markedName(t, n); }
+        if (item && mode === "replace") {
+          removeDeep(item.id);
+          replaced++;
+          item = null;
+        }
+        else if (item && mode === "new") {
+          item = null;
+          name = markedName(t, n);
+        }
         if (item) kept++;
-        else { item = makeBubble(t, name, plan.type, plan.outside && !plan.subs); made++; }
+        else {
+          item = makeBubble(t, name, plan.type, plan.outside && !plan.subs);
+          made++;
+        }
         row.push(item);
         if (plan.subs) {
           const subRow = [];
           plan.subs.forEach(s => {
             let sub = childByName(item.id, s);
             if (sub) keptSubs++;
-            else { sub = makeBubble(item.id, s, plan.subType, plan.outside); madeSubs++; }
+            else {
+              sub = makeBubble(item.id, s, plan.subType, plan.outside);
+              madeSubs++;
+            }
             subRow.push(sub);
           });
           if (plan.inOrder) chain(subRow);
@@ -1198,8 +1306,16 @@ function setDone(text, value) {
   let changed = 0, notes = 0;
   change(value ? "check off" : "un-check", () => {
     r.items.forEach(b => {
-      if (b.type === "note") { notes++; return; }
-      leafSteps(b).forEach(s => { if (!!s.done !== value) { s.done = value; changed++; } });
+      if (b.type === "note") {
+        notes++;
+        return;
+      }
+      leafSteps(b).forEach(s => {
+        if (!!s.done !== value) {
+          s.done = value;
+          changed++;
+        }
+      });
     });
   });
   if (changed) say(ok(value ? "✓ Checked off " : "↺ Un-checked ") + num(changed) + " " + plural("step", changed));
@@ -1221,7 +1337,11 @@ function renameCommand(text) {
   const r = resolveItems(oldSpec);
   if (r.error) return showError(r);
   let newNames;
-  try { newNames = expandNames(newSpec); } catch (e) { return say(bad(e.message)); }
+  try {
+    newNames = expandNames(newSpec);
+  } catch (e) {
+    return say(bad(e.message));
+  }
   if (newNames.length !== r.items.length) {
     say(bad(`You picked ${r.items.length} ${plural("bubble", r.items.length)} but gave ${newNames.length} new ${plural("name", newNames.length)}.`));
     return say(dim("Example: ") + highlight("rename Unit 1-3 to Lesson 1-3"));
@@ -1247,7 +1367,10 @@ function moveCommand(text, smart) {
   let s = splitAt(text, ["to", "into", "in"], true);
   if (!s) {
     const q = text.match(/^\s*"([^"]+)"\s+"([^"]+)"\s*$/);
-    if (q) s = { left: `"${q[1]}"`, right: `"${q[2]}"` };
+    if (q) s = {
+      left: `"${q[1]}"`,
+      right: `"${q[2]}"`
+    };
   }
   if (!s) return say(bad("Move it where? Try: ") + highlight("move Unit 9 to Section 2"));
   const r = resolveItems(s.left);
@@ -1291,7 +1414,10 @@ function copyCommand(text) {
   let s = splitAt(t, ["to", "into"], true);
   if (!s) {   // Linux style without "to":  cp "Unit 1" "Section 2"
     const q = t.match(/^\s*"([^"]+)"\s+"([^"]+)"\s*$/) || t.match(/^(.+?\/\s*\*)\s+(.+)$/);
-    if (q) s = { left: q[0].startsWith('"') ? `"${q[1]}"` : q[1], right: q[0].startsWith('"') ? `"${q[2]}"` : q[2] };
+    if (q) s = {
+      left: q[0].startsWith('"') ? `"${q[1]}"` : q[1],
+      right: q[0].startsWith('"') ? `"${q[2]}"` : q[2]
+    };
   }
   if (!s) return say(bad("Copy to where? Try: ") + highlight("copy Section 1-8 to French"));
   const targets = findTargets(s.right);
@@ -1354,8 +1480,14 @@ function doCopy(sources, targetIds, mode) {
         let name = src.text;
         const old = childByName(t, name);
         if (old) {
-          if (mode === "keep") { skipped++; return; }
-          if (mode === "replace" && old.id !== src.id && !isInsideOrSame(src.id, old.id)) { removeDeep(old.id); replaced++; }
+          if (mode === "keep") {
+            skipped++;
+            return;
+          }
+          if (mode === "replace" && old.id !== src.id && !isInsideOrSame(src.id, old.id)) {
+            removeDeep(old.id);
+            replaced++;
+          }
           else name = markedName(t, name);
         }
         top++;
@@ -1377,12 +1509,22 @@ function doCopy(sources, targetIds, mode) {
 }
 
 function snapshotTree(id) {
-  return { node: Object.assign({}, findBubble(id)), kids: childrenOf(id).map(k => snapshotTree(k.id)) };
+  return {
+    node: Object.assign({}, findBubble(id)),
+    kids: childrenOf(id).map(k => snapshotTree(k.id))
+  };
 }
 
 function buildCopy(tree, parent, name, idMap, pairs) {
   const src = tree.node;
-  const copy = { id: newId(), text: name, type: src.type, parent, done: false, after: null };
+  const copy = {
+    id: newId(),
+    text: name,
+    type: src.type,
+    parent,
+    done: false,
+    after: null
+  };
   if (src.outside) copy.outside = true;
   if (src.hideMain) copy.hideMain = true;
   if (src.alsoCenter) copy.alsoCenter = true;
@@ -1390,14 +1532,19 @@ function buildCopy(tree, parent, name, idMap, pairs) {
   idMap.set(src.id, copy.id);
   pairs.push([src, copy]);
   let count = 1;
-  tree.kids.forEach(k => { count += buildCopy(k, copy.id, k.node.text, idMap, pairs); });
+  tree.kids.forEach(k => {
+    count += buildCopy(k, copy.id, k.node.text, idMap, pairs);
+  });
   return count;
 }
 
 // ------ delete ------
 function deleteCommand(text) {
   let force = false;
-  const t = text.replace(/(^|\s)-(?:-force|[rRfF]{1,2})(?=\s|$)/g, m => { if (/f/i.test(m)) force = true; return " "; }).trim();
+  const t = text.replace(/(^|\s)-(?:-force|[rRfF]{1,2})(?=\s|$)/g, m => {
+    if (/f/i.test(m)) force = true;
+    return " ";
+  }).trim();
   if (!t) return say(bad("Delete what? Try: ") + highlight("delete Section 3"));
   const r = resolveItems(t);
   if (r.error) return showError(r);
@@ -1406,7 +1553,9 @@ function deleteCommand(text) {
   const label = items.length === 1 ? items[0].text : items.length + " bubbles";
   const doIt = () => {
     const holder = items.find(b => isInsideOrSame(cwd, b.id));   // are you standing inside what gets deleted?
-    change("delete " + label, () => items.forEach(b => { if (findBubble(b.id)) removeDeep(b.id); }));
+    change("delete " + label, () => items.forEach(b => {
+      if (findBubble(b.id)) removeDeep(b.id);
+    }));
     if (holder) cwd = holder.parent;
     checkCwd();
     say(ok("✓ Deleted ") + num(total) + " " + plural("bubble", total) + dim("  (type undo to bring them back)"));
@@ -1425,8 +1574,16 @@ function setOutside(text, value) {
   if (r.error) return showError(r);
   let changed = 0, goals = 0;
   change(value ? "show outside" : "move inside", () => r.items.forEach(b => {
-    if (b.type === "goal") { goals++; return; }
-    if (!!b.outside !== value) { b.outside = value; delete b.ox; delete b.oy; changed++; }
+    if (b.type === "goal") {
+      goals++;
+      return;
+    }
+    if (!!b.outside !== value) {
+      b.outside = value;
+      delete b.ox;
+      delete b.oy;
+      changed++;
+    }
   }));
   say(ok("✓ ") + num(changed) + " " + plural("bubble", changed) + (value ? " now hang outside on the map" : " are now inside"));
   if (goals) say(dim("(Goals can't hang outside. On the map, drag a goal onto another one to attach it.)"));
@@ -1439,7 +1596,11 @@ function change(label, doChange) {
   doChange();
   const after = JSON.stringify(brain);
   if (after === before) return false;
-  undoList.push({ label, before, after });
+  undoList.push({
+    label,
+    before,
+    after
+  });
   if (undoList.length > UNDO_LIMIT) undoList.shift();
   redoList.length = 0;
   saveBrain();
@@ -1490,7 +1651,14 @@ function doRedo() {
 
 // ------ making + deleting bubbles ------
 function makeBubble(parent, text, type, outside) {
-  const b = { id: newId(), text, type, parent, done: false, after: null };
+  const b = {
+    id: newId(),
+    text,
+    type,
+    parent,
+    done: false,
+    after: null
+  };
   if (outside) b.outside = true;
   brain.push(b);
   return b;
@@ -1551,8 +1719,16 @@ function leafSteps(b) {
 // redraw the brain map after each change
 function refreshMap() {
   if (brainView !== null && !findBubble(brainView)) brainView = null;
-  try { if (typeof closeMenu === "function") closeMenu(); } catch (e) { /* menu not ready */ }
-  try { if (typeof showBrain === "function") showBrain(false); } catch (e) { console.error(e); }
+  try {
+    if (typeof closeMenu === "function") closeMenu();
+  } catch (e) {
+    /* menu not ready */
+  }
+  try {
+    if (typeof showBrain === "function") showBrain(false);
+  } catch (e) {
+    console.error(e);
+  }
 }
 
    
@@ -1560,10 +1736,18 @@ function refreshMap() {
 // PART 7: finding bubbles and reading names
 // =========================================
 
-function norm(s) { return String(s).toLowerCase().replace(/\s+/g, " ").trim(); }
-function same(a, b) { return norm(a) === norm(b); }
-function childByName(parent, name) { return childrenOf(parent).find(k => same(k.text, name)); }
-function kidsOf(id, type) { return childrenOf(id).filter(k => k.type === type); }
+function norm(s) {
+  return String(s).toLowerCase().replace(/\s+/g, " ").trim();
+}
+function same(a, b) {
+  return norm(a) === norm(b);
+}
+function childByName(parent, name) {
+  return childrenOf(parent).find(k => same(k.text, name));
+}
+function kidsOf(id, type) {
+  return childrenOf(id).filter(k => k.type === type);
+}
 
 function parentOf(id) {
   if (id === null || id === undefined) return null;
@@ -1581,7 +1765,10 @@ function pathText(id) {
   if (id === null || id === undefined) return "~";
   const names = [];
   let b = findBubble(id), guard = 0;
-  while (b && guard++ < 100) { names.unshift(b.text); b = findBubble(b.parent); }
+  while (b && guard++ < 100) {
+    names.unshift(b.text);
+    b = findBubble(b.parent);
+  }
   return "~/" + names.join("/");
 }
 
@@ -1608,10 +1795,15 @@ function countAll(id) {
 
 // natural sort: Section 2 comes before Section 10
 function sorted(list) {
-  return [...list].sort((a, b) => a.text.localeCompare(b.text, undefined, { numeric: true, sensitivity: "base" }));
+  return [...list].sort((a, b) => a.text.localeCompare(b.text, undefined, {
+    numeric: true,
+    sensitivity: "base"
+  }));
 }
 
-function plural(word, n) { return n === 1 ? word : word + "s"; }
+function plural(word, n) {
+  return n === 1 ? word : word + "s";
+}
 
 function listOf(names) {
   const shown = names.slice(0, 3).join(", ");
@@ -1625,41 +1817,67 @@ function checkCwd() {
 
 function goTo(id) {
   if (id === undefined) id = null;
-  if (id !== cwd) { prevCwd = cwd; cwd = id; }
+  if (id !== cwd) {
+    prevCwd = cwd;
+    cwd = id;
+  }
   say(dim("📂 ") + pl(pathText(id)) + dim(`  (${childrenOf(id).length} inside)`));
 }
 
 // Find one place from what was typed: "Section 1", "Sections/Section 1", "..", "~"
 function findPlace(text, from = cwd) {
   let t = text.trim().replace(/^"(.*)"$/, "$1").trim();
-  if (!t) return { error: "Which place? Type a name, like: go Spanish" };
+  if (!t) return {
+    error: "Which place? Type a name, like: go Spanish"
+  };
   const low = t.toLowerCase();
   const realKid = childByName(from, t);          // a bubble really called "Home"? that wins
-  if (realKid && !["~", "/", "~/", "..", "."].includes(low)) return { id: realKid.id };
-  if (["~", "/", "~/", "home", "top", "my brain"].includes(low)) return { id: null };
-  if ([".", "here"].includes(low)) return { id: from };
-  if (["..", "back", "up"].includes(low)) return { id: parentOf(from) };
+  if (realKid && !["~", "/", "~/", "..", "."].includes(low)) return {
+    id: realKid.id
+  };
+  if (["~", "/", "~/", "home", "top", "my brain"].includes(low)) return {
+    id: null
+  };
+  if ([".", "here"].includes(low)) return {
+    id: from
+  };
+  if (["..", "back", "up"].includes(low)) return {
+    id: parentOf(from)
+  };
   const fromTop = /^~?\//.test(t);
   const parts = t.replace(/^~?\/+/, "").split("/").map(p => p.trim().replace(/^"(.*)"$/, "$1")).filter(Boolean);
-  if (!parts.length) return { id: null };
+  if (!parts.length) return {
+    id: null
+  };
 
   const walk = (start, list) => {
     let cur = start;
     for (const p of list) {
-      if (p === "..") { cur = parentOf(cur); continue; }
+      if (p === "..") {
+        cur = parentOf(cur);
+        continue;
+      }
       if (p === ".") continue;
-      if (p === "~") { cur = null; continue; }
+      if (p === "~") {
+        cur = null;
+        continue;
+      }
       const kid = childByName(cur, p);
       if (!kid) return null;
       cur = kid.id;
     }
-    return { id: cur };
+    return {
+      id: cur
+    };
   };
 
   // 1. from where you are, then from the top
   const direct = fromTop ? walk(null, parts) : (walk(from, parts) || walk(null, parts));
   if (direct) return direct;
-  if (fromTop) return { error: `I can't find ${t}.`, tip: "Type look to see what's here." };
+  if (fromTop) return {
+    error: `I can't find ${t}.`,
+    tip: "Type look to see what's here."
+  };
 
   // 2. search the whole brain
   const found = [];
@@ -1667,9 +1885,17 @@ function findPlace(text, from = cwd) {
     const end = walk(b.id, parts.slice(1));
     if (end && !found.includes(end.id)) found.push(end.id);
   });
-  if (found.length === 1) return { id: found[0] };
-  if (found.length > 1) return { error: `There are ${found.length} bubbles called ${parts[parts.length - 1]}. Which one?`, matches: found };
-  return { error: `I can't find "${t}".`, tip: `Type look to see what's in ${nameOf(from)}, or find ${parts[parts.length - 1]} to search everywhere.` };
+  if (found.length === 1) return {
+    id: found[0]
+  };
+  if (found.length > 1) return {
+    error: `There are ${found.length} bubbles called ${parts[parts.length - 1]}. Which one?`,
+    matches: found
+  };
+  return {
+    error: `I can't find "${t}".`,
+    tip: `Type look to see what's in ${nameOf(from)}, or find ${parts[parts.length - 1]} to search everywhere.`
+  };
 }
 
 // find the places after "to": "Section 1-8", "Unit 1, Container 1", "all steps"
@@ -1683,34 +1909,61 @@ function findTargets(spec) {
     else if (kind.startsWith("goal")) kids = kids.filter(k => k.type === "goal");
     else if (kind.startsWith("note")) kids = kids.filter(k => k.type === "note");
     else kids = kids.filter(k => k.type !== "note");
-    if (!kids.length) return { error: "There's nothing here to put them in." };
-    return { ids: sorted(kids).map(k => k.id) };
+    if (!kids.length) return {
+      error: "There's nothing here to put them in."
+    };
+    return {
+      ids: sorted(kids).map(k => k.id)
+    };
   }
   let names;
-  try { names = expandNames(s); } catch (e) { return { error: e.message }; }
-  if (!names.length) return { error: "Where should they go? Type a name after to." };
+  try {
+    names = expandNames(s);
+  } catch (e) {
+    return {
+      error: e.message
+    };
+  }
+  if (!names.length) return {
+    error: "Where should they go? Type a name after to."
+  };
   if (names.length === 1) {
     const p = findPlace(names[0]);
-    return p.error ? p : { ids: [p.id] };
+    return p.error ? p : {
+      ids: [p.id]
+    };
   }
   const fromRange = names.length !== splitList(s).filter(x => x.trim()).length;
   const ids = [], missing = [];
   names.forEach(n => {
     let id;
-    if (fromRange) { const k = childByName(cwd, n); id = k ? k.id : undefined; }
-    else { const p = findPlace(n); id = p.error ? undefined : p.id; }
+    if (fromRange) {
+      const k = childByName(cwd, n);
+      id = k ? k.id : undefined;
+    }
+    else {
+      const p = findPlace(n);
+      id = p.error ? undefined : p.id;
+    }
     if (id === undefined) missing.push(n); else ids.push(id);
   });
   if (missing.length) {
-    return { error: `I can't find ${listOf(missing)} in ${nameOf(cwd)}.`, tip: "Type look to see what's here. To make them AND fill them, use with, like: add Section 1-8 with Unit 1-10" };
+    return {
+      error: `I can't find ${listOf(missing)} in ${nameOf(cwd)}.`,
+      tip: "Type look to see what's here. To make them AND fill them, use with, like: add Section 1-8 with Unit 1-10"
+    };
   }
-  return { ids };
+  return {
+    ids
+  };
 }
 
 // find the bubbles a command is about: "Unit 1-3 in Section 1", "all notes", "Unit 1"
 function resolveItems(text) {
   let t = text.trim(), base = cwd;
-  if (!t) return { error: "Which ones? Type a name after the command." };
+  if (!t) return {
+    error: "Which ones? Type a name after the command."
+  };
   const where = splitAt(t, ["in", "from", "inside"], true);
   if (where) {
     const p = findPlace(where.right);
@@ -1725,12 +1978,25 @@ function resolveItems(text) {
     if (kind.startsWith("step")) kids = kids.filter(k => k.type === "step");
     else if (kind.startsWith("goal")) kids = kids.filter(k => k.type === "goal");
     else if (kind.startsWith("note")) kids = kids.filter(k => k.type === "note");
-    if (!kids.length) return { error: `There's nothing like that in ${nameOf(base)}.` };
-    return { items: sorted(kids), base };
+    if (!kids.length) return {
+      error: `There's nothing like that in ${nameOf(base)}.`
+    };
+    return {
+      items: sorted(kids),
+      base
+    };
   }
   let names;
-  try { names = expandNames(t); } catch (e) { return { error: e.message }; }
-  if (!names.length) return { error: "Which ones? Type a name after the command." };
+  try {
+    names = expandNames(t);
+  } catch (e) {
+    return {
+      error: e.message
+    };
+  }
+  if (!names.length) return {
+    error: "Which ones? Type a name after the command."
+  };
   const fromRange = names.length !== splitList(t).filter(x => x.trim()).length;
   const items = [], missing = [];
   for (const n of names) {
@@ -1740,11 +2006,19 @@ function resolveItems(text) {
       if (p.error && p.matches) return p;      // more than one: ask them to be clearer
       if (!p.error && p.id !== null) b = findBubble(p.id);
     }
-    if (b) { if (!items.includes(b)) items.push(b); }
+    if (b) {
+      if (!items.includes(b)) items.push(b);
+    }
     else missing.push(n);
   }
-  if (missing.length) return { error: `I can't find ${listOf(missing)} in ${nameOf(base)}.`, tip: "Type look to see what's here." };
-  return { items, base };
+  if (missing.length) return {
+    error: `I can't find ${listOf(missing)} in ${nameOf(base)}.`,
+    tip: "Type look to see what's here."
+  };
+  return {
+    items,
+    base
+  };
 }
 
 // "Section 1-8, Practice" -> ["Section 1", ..., "Section 8", "Practice"]
@@ -1754,13 +2028,28 @@ function expandNames(spec) {
     piece = piece.trim();
     if (!piece) return;
     const quoted = piece.match(/^"(.*)"$/);
-    if (quoted) { if (quoted[1].trim()) names.push(quoted[1].trim()); return; }
+    if (quoted) {
+      if (quoted[1].trim()) names.push(quoted[1].trim());
+      return;
+    }
     const brace = piece.match(/^(.*?)\{\s*(\d+)\s*\.\.\s*(\d+)\s*\}(.*)$/);   // Section {1..8}
     const dash = piece.match(/^(.*?)(\d+)\s*(?:-|–|—|\.\.)\s*(\d+)$/);        // Section 1-8
     let before, a, b, after = "";
-    if (brace) { before = brace[1]; a = Number(brace[2]); b = Number(brace[3]); after = brace[4]; }
-    else if (dash) { before = dash[1]; a = Number(dash[2]); b = Number(dash[3]); }
-    else { names.push(piece.replace(/\s+/g, " ")); return; }
+    if (brace) {
+      before = brace[1];
+      a = Number(brace[2]);
+      b = Number(brace[3]);
+      after = brace[4];
+    }
+    else if (dash) {
+      before = dash[1];
+      a = Number(dash[2]);
+      b = Number(dash[3]);
+    }
+    else {
+      names.push(piece.replace(/\s+/g, " "));
+      return;
+    }
     const count = Math.abs(b - a) + 1;
     if (count > MAX_AT_ONCE) throw new Error(`${a}-${b} is ${count} things. The most I can do at once is ${MAX_AT_ONCE}.`);
     const step = a <= b ? 1 : -1;
@@ -1773,10 +2062,16 @@ function expandNames(spec) {
 function readTyped(spec, fallback) {
   let s = spec.trim().replace(/^(a|an|some|the)\s+/i, "");
   const m = s.match(/^(goals?|steps?|sub-?steps?|notes?|ideas?)\s+(.+)$/i);
-  if (!m) return { type: fallback, spec: s.replace(/^(called|named)\s+/i, "") };
+  if (!m) return {
+    type: fallback,
+    spec: s.replace(/^(called|named)\s+/i, "")
+  };
   const w = m[1].toLowerCase();
   const type = w.startsWith("goal") ? "goal" : (w.startsWith("note") || w.startsWith("idea")) ? "note" : "step";
-  return { type, spec: m[2].replace(/^(called|named)\s+/i, "") };
+  return {
+    type,
+    spec: m[2].replace(/^(called|named)\s+/i, "")
+  };
 }
 
 // takes "outside", "inside" and "in order" off the end (and "in order" from the middle)
@@ -1785,15 +2080,30 @@ function grabFlags(text, flags) {
   for (let guard = 0; guard < 6; guard++) {
     const m = mask(t);
     let r = m.match(/\s(in order|ordered|in a row)\s*$/);
-    if (r) { flags.inOrder = true; t = t.slice(0, r.index); continue; }
+    if (r) {
+      flags.inOrder = true;
+      t = t.slice(0, r.index);
+      continue;
+    }
     r = m.match(/\s(outside|on the map|on map)\s*$/);
-    if (r) { flags.outside = true; t = t.slice(0, r.index); continue; }
+    if (r) {
+      flags.outside = true;
+      t = t.slice(0, r.index);
+      continue;
+    }
     r = m.match(/\s(inside|hidden)\s*$/);
-    if (r) { flags.outside = false; t = t.slice(0, r.index); continue; }
+    if (r) {
+      flags.outside = false;
+      t = t.slice(0, r.index);
+      continue;
+    }
     break;
   }
   const mid = mask(t).search(/\sin order(?=\s)/);
-  if (mid >= 0) { flags.inOrder = true; t = t.slice(0, mid) + t.slice(mid + " in order".length); }
+  if (mid >= 0) {
+    flags.inOrder = true;
+    t = t.slice(0, mid) + t.slice(mid + " in order".length);
+  }
   return t.trim();
 }
 
@@ -1812,7 +2122,11 @@ function splitAt(text, words, useLast) {
   const left = padded.slice(0, hit.index).trim();
   const right = padded.slice(hit.index + hit[0].length).trim();
   if (!left || !right) return null;
-  return { left, right, word: hit[1] };
+  return {
+    left,
+    right,
+    word: hit[1]
+  };
 }
 
 // splits on commas (but never inside `""`)
@@ -1820,7 +2134,10 @@ function splitList(spec) {
   const m = mask(spec), parts = [];
   let start = 0;
   for (let i = 0; i < m.length; i++) {
-    if (m[i] === ",") { parts.push(spec.slice(start, i)); start = i + 1; }
+    if (m[i] === ",") {
+      parts.push(spec.slice(start, i));
+      start = i + 1;
+    }
   }
   parts.push(spec.slice(start));
   return parts;
@@ -1831,7 +2148,10 @@ function mask(s) {
   let result = "", inQuotes = false;
   for (let i = 0; i < s.length; i++) {
     const ch = s[i];
-    if (ch === '"') { inQuotes = !inQuotes; result += ch; }
+    if (ch === '"') {
+      inQuotes = !inQuotes;
+      result += ch;
+    }
     else result += inQuotes ? "x" : ch.toLowerCase();
   }
   return result;
@@ -1842,8 +2162,15 @@ function splitCommands(line) {
   const m = mask(line), list = [];
   let start = 0;
   for (let i = 0; i < m.length; i++) {
-    if (m[i] === ";") { list.push(line.slice(start, i)); start = i + 1; }
-    else if (m[i] === "&" && m[i + 1] === "&") { list.push(line.slice(start, i)); start = i + 2; i++; }
+    if (m[i] === ";") {
+      list.push(line.slice(start, i));
+      start = i + 1;
+    }
+    else if (m[i] === "&" && m[i + 1] === "&") {
+      list.push(line.slice(start, i));
+      start = i + 2;
+      i++;
+    }
   }
   list.push(line.slice(start));
   return list.map(x => x.trim()).filter(Boolean);
@@ -1942,18 +2269,43 @@ function showError(res) {
 
 // ------ printing ------
 function esc(s) {
-  return String(s).replace(/[&<>"]/g, ch => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[ch]));
+  return String(s).replace(/[&<>"]/g, ch => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;"
+  }[ch]));
 }
-function paint(kind, s) { return `<span class="k-${kind}">${esc(s)}</span>`; }
-function cm(s) { return paint("command", s); }   // commands
-function nm(s) { return paint("name", s); }      // bubble names
-function pl(s) { return paint("place", s); }     // places / paths
-function num(s) { return paint("number", s); }   // numbers
-function kw(s) { return paint("keyword", s); }   // keywords + headings
-function ok(s) { return paint("good", s); }      // good news
-function bad(s) { return paint("error", s); }    // errors
-function warn(s) { return paint("warning", s); } // warnings
-function dim(s) { return paint("dim", s); }      // hints
+function paint(kind, s) {
+  return `<span class="k-${kind}">${esc(s)}</span>`;
+}
+function cm(s) {
+  return paint("command", s);
+}   // commands
+function nm(s) {
+  return paint("name", s);
+}      // bubble names
+function pl(s) {
+  return paint("place", s);
+}     // places / paths
+function num(s) {
+  return paint("number", s);
+}   // numbers
+function kw(s) {
+  return paint("keyword", s);
+}   // keywords + headings
+function ok(s) {
+  return paint("good", s);
+}      // good news
+function bad(s) {
+  return paint("error", s);
+}    // errors
+function warn(s) {
+  return paint("warning", s);
+} // warnings
+function dim(s) {
+  return paint("dim", s);
+}      // hints
 function strong(s) {
    return `<b>${esc(s)}</b>`;
 }
@@ -1983,11 +2335,22 @@ function highlight(line) {
   let html = "", expectCommand = true;
   line.split(/("[^"]*"?)/).forEach(part => {
     if (!part) return;
-    if (part.startsWith('"')) { html += nm(part); expectCommand = false; return; }
+    if (part.startsWith('"')) {
+      html += nm(part);
+      expectCommand = false;
+      return;
+    }
     part.split(/(\s+|;|&&)/).forEach(tok => {
       if (!tok) return;
-      if (/^\s+$/.test(tok)) { html += tok; return; }
-      if (tok === ";" || tok === "&&") { html += kw(tok); expectCommand = true; return; }
+      if (/^\s+$/.test(tok)) {
+        html += tok;
+        return;
+      }
+      if (tok === ";" || tok === "&&") {
+        html += kw(tok);
+        expectCommand = true;
+        return;
+      }
       if (expectCommand) {
         expectCommand = false;
         html += (LOOKUP[cleanWord(tok)] || /^!/.test(tok)) ? cm(tok) : esc(tok);
@@ -2012,7 +2375,9 @@ function promptHtml() {
   return `<span class="k-prompt">brain</span><span class="k-dim">:</span><span class="k-place">${esc(shortPath(cwd))}</span><span class="k-text"> $</span>`;
 }
 
-function updatePrompt() { promptEl.innerHTML = promptHtml(); }
+function updatePrompt() {
+  promptEl.innerHTML = promptHtml();
+}
 
 // ------ quick buttons ------
 function addChip(label, action, main) {
@@ -2039,17 +2404,26 @@ function updateChips() {
   if (changedSinceMap) addChip("🗺 see it on the map", () => submit("map"), !suggestion);
   if (tut) {
     const task = currentTask();
-    addChip("👉 " + task, () => { input.value = task; input.focus(); }, true);
+    addChip("👉 " + task, () => {
+      input.value = task;
+      input.focus();
+    }, true);
     addChip("skip", () => submit("skip"));
     addChip("stop tutorial", () => submit("stop"));
   }
-  addChip("↑", () => { recall(-1); input.focus(); });
+  addChip("↑", () => {
+    recall(-1);
+    input.focus();
+  });
   QUICK_BUTTONS.forEach(c => addChip(c, () => submit(c)));
 }
 
 // ------ questions (yes / no, keep / new ...) ------
 function ask(choices, onAnswer) {
-  pending = { choices, onAnswer };
+  pending = {
+    choices,
+    onAnswer
+  };
   say(dim("Type ") + choices.map(c => cm(c)).join(dim(" or ")) + dim("  (or tap a button)"));
   updateChips();
 }
@@ -2075,7 +2449,10 @@ function submit(raw) {
   suggestion = null;
   lastCmd = null;
   lineCount++;
-  if (!line) { updateChips(); return; }
+  if (!line) {
+    updateChips();
+    return;
+  }
 
   // answering a question?
   if (pending) {
@@ -2093,15 +2470,26 @@ function submit(raw) {
   // tutorial words
   if (tut) {
     const low = line.toLowerCase();
-    if (["skip", "next"].includes(low)) { nextStep(); updatePrompt(); return; }
-    if (["stop", "stop tutorial", "quit tutorial", "end tutorial", "exit tutorial"].includes(low)) { stopTutorial(); return; }
+    if (["skip", "next"].includes(low)) {
+      nextStep();
+      updatePrompt();
+      return;
+    }
+    if (["stop", "stop tutorial", "quit tutorial", "end tutorial", "exit tutorial"].includes(low)) {
+      stopTutorial();
+      return;
+    }
   }
 
   // !! and !5 run old commands again
   if (line === "!!" || /^!\d+$/.test(line)) {
     const n = line === "!!" ? pastCommands.length : Number(line.slice(1));
     const old = pastCommands[n - 1];
-    if (!old) { say(bad(`There's no command ${line}.`) + dim(" Type history to see them.")); updateChips(); return; }
+    if (!old) {
+      say(bad(`There's no command ${line}.`) + dim(" Type history to see them."));
+      updateChips();
+      return;
+    }
     line = old;
     say(dim("↳ ") + highlight(line));
   }
@@ -2110,7 +2498,10 @@ function submit(raw) {
   const pieces = splitCommands(line);
   for (let i = 0; i < pieces.length; i++) {
     runOne(pieces[i]);
-    if (pending && i < pieces.length - 1) { say(dim("(I stopped here to wait for your answer.)")); break; }
+    if (pending && i < pieces.length - 1) {
+      say(dim("(I stopped here to wait for your answer.)"));
+      break;
+    }
   }
   afterLine(true);
 }
@@ -2126,7 +2517,9 @@ function afterLine(typedSomething) {
   updateChips();
 }
 
-function cleanWord(w) { return String(w).toLowerCase().replace(/^\/+(?=.)/, ""); }
+function cleanWord(w) {
+  return String(w).toLowerCase().replace(/^\/+(?=.)/, "");
+}
 
 function runOne(text) {
   checkCwd();
@@ -2138,14 +2531,28 @@ function runOne(text) {
     say(dim("🧐 No sudo needed. You're already the boss here."));
     return rest.trim() ? runOne(rest) : undefined;
   }
-  if (word === "cd.." || word === "cd../") { word = "back"; rest = ""; }
-  if ((word === "go" || word === "cd") && /^(back|up|\.\.)$/i.test(rest.trim())) { word = "back"; rest = ""; }
-  if ((word === "go" || word === "cd") && /^(home|~|\/|top)$/i.test(rest.trim())) { word = "home"; rest = ""; }
+  if (word === "cd.." || word === "cd../") {
+    word = "back";
+    rest = "";
+  }
+  if ((word === "go" || word === "cd") && /^(back|up|\.\.)$/i.test(rest.trim())) {
+    word = "back";
+    rest = "";
+  }
+  if ((word === "go" || word === "cd") && /^(home|~|\/|top)$/i.test(rest.trim())) {
+    word = "home";
+    rest = "";
+  }
   const cmd = LOOKUP[word];
   if (!cmd) return unknown(word, rest, text);
   lastCmd = cmd.names[0];
-  try { cmd.run(rest, word); }
-  catch (e) { say(bad("Oops, something went wrong: " + e.message)); console.error(e); }
+  try {
+    cmd.run(rest, word);
+  }
+  catch (e) {
+    say(bad("Oops, something went wrong: " + e.message));
+    console.error(e);
+  }
   updatePrompt();
 }
 
@@ -2159,14 +2566,20 @@ function unknown(word, rest, text) {
   let best = null, bestScore = 99;
   if (word.length >= 2) {
     const starts = COMMANDS.map(c => c.names[0]).filter(n => n.startsWith(word));
-    if (starts.length) { best = starts.sort((a, b) => a.length - b.length)[0]; bestScore = 0; }
+    if (starts.length) {
+      best = starts.sort((a, b) => a.length - b.length)[0];
+      bestScore = 0;
+    }
   }
   // 2. otherwise the closest spelling (main names win ties)
   if (!best) {
     COMMANDS.forEach(c => c.names.forEach((name, i) => {
       if (name.length < 2) return;
       const d = distance(word, name) + (i === 0 ? 0 : 0.5);
-      if (d < bestScore) { bestScore = d; best = c.names[0]; }
+      if (d < bestScore) {
+        bestScore = d;
+        best = c.names[0];
+      }
     }));
   }
   if (best && bestScore <= (word.length <= 3 ? 1.5 : 2.5)) {
@@ -2220,10 +2633,15 @@ function complete() {
     const tail = words.slice(i).join(" ");
     if (!tail) continue;
     const opts = names.filter(n => n.toLowerCase().startsWith(tail.toLowerCase()));
-    if (opts.length === 1) { input.value = head + " " + opts[0]; return; }
+    if (opts.length === 1) {
+      input.value = head + " " + opts[0];
+      return;
+    }
     if (opts.length > 1) {
       let common = opts[0];
-      opts.forEach(o => { while (!o.toLowerCase().startsWith(common.toLowerCase())) common = common.slice(0, -1); });
+      opts.forEach(o => {
+        while (!o.toLowerCase().startsWith(common.toLowerCase())) common = common.slice(0, -1);
+      });
       if (common.length > tail.length) input.value = head + " " + common;
       else say(dim(opts.slice(0, 20).join(" · ")));
       return;
@@ -2267,7 +2685,9 @@ function toRGB(color) {
   probe.remove();
   return value;
 }
-function sameColor(a, b) { return toRGB(a) === toRGB(b); }
+function sameColor(a, b) {
+  return toRGB(a) === toRGB(b);
+}
 
 function loadSettings() {
   try {
@@ -2276,12 +2696,21 @@ function loadSettings() {
     if (!THEMES[appearance.theme]) appearance.theme = "classic";
     if (!appearance.custom || typeof appearance.custom !== "object") appearance.custom = {};
     if (Array.isArray(saved.history)) pastCommands = saved.history.slice(-HISTORY_LIMIT);
-  } catch (e) { /* nothing saved yet */ }
+  } catch (e) {
+    /* nothing saved yet */
+  }
   histPos = pastCommands.length;
 }
 
 function saveSettings() {
-  try { localStorage.setItem(SAVE_KEY, JSON.stringify({ appearance, history: pastCommands })); } catch (e) { /* storage full */ }
+  try {
+    localStorage.setItem(SAVE_KEY, JSON.stringify({
+      appearance,
+      history: pastCommands
+    }));
+  } catch (e) {
+    /* storage full */
+  }
 }
 
 // ------ opening + closing ------
@@ -2385,10 +2814,22 @@ function buildScreen() {
     submit(line);
   });
   input.addEventListener("keydown", e => {
-    if (e.key === "ArrowUp") { e.preventDefault(); recall(-1); }
-    else if (e.key === "ArrowDown") { e.preventDefault(); recall(1); }
-    else if (e.key === "Tab") { e.preventDefault(); complete(); }
-    else if (e.key.toLowerCase() === "l" && e.ctrlKey) { e.preventDefault(); out.innerHTML = ""; }
+    if (e.key === "ArrowUp") {
+      e.preventDefault();
+      recall(-1);
+    }
+    else if (e.key === "ArrowDown") {
+      e.preventDefault();
+      recall(1);
+    }
+    else if (e.key === "Tab") {
+      e.preventDefault();
+      complete();
+    }
+    else if (e.key.toLowerCase() === "l" && e.ctrlKey) {
+      e.preventDefault();
+      out.innerHTML = "";
+    }
   });
   out.addEventListener("click", () => {
     const touch = window.matchMedia && window.matchMedia("(pointer: coarse)").matches;
@@ -2411,7 +2852,9 @@ function addOpenButton() {
   openBtn.addEventListener("click", openConsole);
   settingsTab.appendChild(openBtn);
   const toggle = document.getElementById("brainToggle");
-  const sync = () => { openBtn.style.display = toggle && !toggle.checked ? "none" : ""; };
+  const sync = () => {
+    openBtn.style.display = toggle && !toggle.checked ? "none" : "";
+  };
   if (toggle) toggle.addEventListener("change", sync);
   sync();
 }
@@ -2421,7 +2864,9 @@ function addOpenButton() {
 // PART 9: start up
 // ================
 function start() {
-  COMMANDS.forEach(c => c.names.forEach(n => { LOOKUP[n.toLowerCase()] = c; }));
+  COMMANDS.forEach(c => c.names.forEach(n => {
+    LOOKUP[n.toLowerCase()] = c;
+  }));
   loadSettings();
   buildScreen();
   applyLook();
