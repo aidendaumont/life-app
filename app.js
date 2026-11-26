@@ -347,7 +347,7 @@ function smoothPath(points) {
 
 // start as smooth arc ("base" shape)
 function routeLine(a, b, obstacles, bow) {
-  const N = 24;
+  const N = 48;
   const dx = b.x - a.x, dy = b.y - a.y;
   const len = Math.hypot(dx, dy);
   if (len === 0) return "";
