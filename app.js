@@ -193,7 +193,8 @@ function showSettings() {
     document.getElementById("brainToggle").checked = settings.brain;
     document.getElementById("brainTab").style.display = settings.brain ? "" : "none";
 }
-// ---------- BRAIN: saving and finding ----------
+
+// brain: saving and finding
 
 function saveBrain() {
   localStorage.setItem("brain", JSON.stringify(brain));
@@ -223,7 +224,7 @@ function isFinished(bubble) {
   return progress(bubble.id) === 1;
 }
 
-// ---------- BRAIN: smart helper ----------
+// brain: smart helper
 
 const knownOrders = [
   ["spanish", "portuguese"],
@@ -250,7 +251,7 @@ function autoLink(bubble) {
   });
 }
 
-// ---------- BRAIN: actions ----------
+// brain: actions
 
 function addBubble() {
   const input = document.getElementById("bubbleText");
@@ -328,6 +329,58 @@ function wrapText(text, max) {
   });
   lines.push(line);
   return lines.slice(0, 3);
+}
+
+function smoothPath(points) {
+  let d = `M${points[0].x} ${points[0].y}`;
+  for (let i = 0; i < points.length - 1; i++) {
+    const p0 = points[i - 1] || points[i];
+    const p1 = points[i];
+    const p2 = points[i + 1];
+    const p3 = points[i + 2] || p2;
+    const c1x = p1.x + (p2.x - p0.x) / 6, c1y = p1.y + (p2.y - p0.y) / 6;
+    const c2x = p2.x - (p3.x - p1.x) / 6, c2y = p2.y - (p3.y - p1.y) / 6;
+    d += ` C${c1x} ${c1y} ${c2x} ${c2y} ${p2.x} ${p2.y}`;
+  }
+  return d;
+}
+
+function routeLine(a, b, obstacles, bow) {
+  const dx = b.x - a.x, dy = b.y - a.y;
+  const len2 = dx * dx + dy * dy;
+  if (len2 === 0) return "";
+  const len = Math.sqrt(len2);
+  const nx = -dy / len, ny = dx / len;
+  const waypoints = [];
+
+  obstacles.forEach(o => {
+    const t = ((o.x - a.x) * dx + (o.y - a.y) * dy) / len2;
+    if (t <= 0 || t >= 1) return;
+    const px = a.x + dx * t, py = a.y + dy * t;
+    const dist = Math.hypot(px - o.x, py - o.y);
+    if (dist >= o.r) return;
+    let ux = nx, uy = ny;
+    if (dist > 1) {
+        ux = (px - o.x) / dist;
+        uy = (py - o.y) / dist;
+    }
+    waypoints.push({
+        t,
+        x: o.x + ux * o.r,
+        y: o.y + uy * o.r,
+    });
+  });
+
+  if (waypoints.length === 0) {
+    waypoints.push({
+        t: 0.5,
+        x: a.x + dx / 2 + nx * bow * len,
+        y: a.y + dy / 2 + ny * bow * len,
+    });
+  }
+
+  waypoints.sort((p, q) => p.t - q.t);
+  return smoothPath([a, ...waypoints, b]);
 }
 
 function drawBubble(group, item, x, y, r, isCenter) {
