@@ -458,12 +458,28 @@ function showBrain(animate = true) {
       applyCamera();
   });
 
-  // branches from the center
-  spots.forEach(s => {
-    const mx = (cx + s.x) / 2, my = (cy + s.y) / 2;
-    const bendX = -(s.y - cy) / R * 20, bendY = (s.x - cx) / R * 20;
+  // bubbles the lines avoid (center 1st, then each child)
+  const obstacles = [{
+        x: cx,
+        y: cy,
+        r: 60,
+    },
+    ...spots.map(s => ({
+        x: s.x,
+        y: s.y,
+        r: 50,
+    }))
+  ];
+
+  // branches from center
+  spots.forEach((s, i) => {
+    const others = obstacles.filter((o, n) => n !== 0 && n !== i + 1);
+    const d = routeLine({
+        x: cx,
+        y: cy,
+    }, s, others, 0.1);
     svgEl("path", {
-        d: `M${cx} ${cy} Q${mx + bendX} ${my + bendY} ${s.x} ${s.y}`,
+        d,
         class: "branch",
     }, group);
   });
@@ -473,11 +489,14 @@ function showBrain(animate = true) {
     const j = kids.findIndex(s => s.id === k.after);
     if (j === -1) return;
     const a = spots[j], b = spots[i];
-    const mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
-    let qx = mx + (mx - cx) * 0.6, qy = my + (my - cy) * 0.6;
-    if (Math.hypot(mx - cx, my - cy) < 10) qx = cx + 150;
+    const len = Math.hypot(b.x - a.x, b.y - a.y) || 1;
+    const nx = -(b.y - a.y) / len, ny = (b.x - a.x) / len;
+    const midX = (a.x + b.x) / 2, midY = (a.y + b.y) / 2;
+    const side = Math.sign((midX - cx) * nx + (midY - cy) * ny) || 1;
+    const others = obstacles.filter((o, n) => n !== i + 1 && n !== j + 1);
+    const d = routeLine(a, b, others, 0.25 * side);
     svgEl("path", {
-        d: `M${a.x} ${a.y} Q${qx} ${qy} ${b.x} ${b.y}`,
+        d,
         class: "first-link",
     }, group);
   });
