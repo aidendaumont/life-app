@@ -90,7 +90,12 @@
         <span>Hide main line</span>
         <input type="checkbox" switch id="menuMainToggle" onchange="setHideMain(menuItem, this.checked)">
       </label>
-      <button onclick="menuAddStep()">Add a step</button>
+      <label class="setting" id="menuOutsideRow">
+        <span>Show outside</span>
+        <input type="checkbox" switch id="menuOutsideToggle" onchange="setOutside(menuItem, this.checked)">
+      </label>
+      <button onclick="menuAddStep(true)">Add step outside</button>
+      <button onclick="menuAddStep(false)">Add step inside</button>
       <button onclick="menuRename()">Rename</button>
       <button class="danger" onclick="menuDelete()">Delete</button>
       <button id="menuClose" onclick="closeMenu()">Cancel</button>
