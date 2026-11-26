@@ -1,40 +1,39 @@
-/* ==============================================================
-   BRAIN CONSOLE  —  console.js
+/* ================================================================
    A Linux-style terminal for your Second Brain.
 
-   HOW THIS FILE IS SET UP
-     PART 1  Settings you can change
-     PART 2  Color themes
-     PART 3  COMMANDS   <-- every command lives here
-     PART 4  Help pages
-     PART 5  Tutorials
-     PART 6  What the commands do (adding, deleting, copying...)
-     PART 7  Finding bubbles and reading names (ranges, paths...)
-     PART 8  The screen (printing, typing, buttons, colors)
-     PART 9  Start up
+   HOW IT'S SET UP:
+     PART 1  changable settings
+     PART 2  color themes
+     PART 3  COMMANDS   <-- every command
+     PART 4  help pages
+     PART 5  tutorials
+     PART 6  what the commands do (adding, deleting, copying, etc)
+     PART 7  finding bubbles and reading names (ranges, paths...)
+     PART 8  screen (printing, typing, buttons, colors)
+     PART 9  start up
 
-   TO ADD A NEW COMMAND
+   TO ADD A NEW COMMAND:
      Copy one { ... } block in PART 3 and change it.
-     "help" and "help advanced" update by themselves.
+     "help" and "help advanced" self update.
 
-   This file borrows these from app.js:
+   This file borrows from app.js:
      brain, brainView, saveBrain(), showBrain(), findBubble(),
      childrenOf(), progress(), isFinished(), openTab(), closeMenu()
-   So in index.html it has to load AFTER app.js.
-   ============================================================== */
+=================================================================== */
 
 (function () {
 "use strict";
 
-// ==============================================================
-// PART 1: SETTINGS YOU CAN CHANGE
-// ==============================================================
-const MAX_AT_ONCE = 300;     // the most bubbles one "add" can make
-const MAX_COPY = 3000;       // the most bubbles one "copy" can make
+   
+// ==========================
+// PART 1: changable settings
+// ==========================
+const MAX_AT_ONCE = 300;     // the most bubbles 1 "add" can make
+const MAX_COPY = 3000;       // the most bubbles 1 "copy" can make
 const UNDO_LIMIT = 30;       // how many changes "undo" remembers
 const HISTORY_LIMIT = 100;   // how many old commands are remembered
 const DEFAULT_SIZE = 14;     // text size
-const QUICK_BUTTONS = ["help", "look", "back", "undo", "clear"]; // tap buttons above the typing box
+const QUICK_BUTTONS = ["help", "look", "back", "undo", "clear"]; // buttons above the typing box
 const PRAISE = [
    "✓ Nice!",
    "✓ Awesome!",
@@ -44,7 +43,7 @@ const PRAISE = [
 ];
 const SAVE_KEY = "brainConsole"; // where colors + old commands are saved
 
-// The order the groups show up in "help"
+// order the groups show up in "help"
 const GROUP_ORDER = [
    "Moving around",
    "Adding",
@@ -55,10 +54,11 @@ const GROUP_ORDER = [
    "Other",
 ];
 
-// ==============================================================
-// PART 2: COLOR THEMES
-// Every theme needs every part. To add one, copy a line and rename it.
-// ==============================================================
+   
+// ====================================================================
+// PART 2: color themes
+// every theme needs every part. To add one, copy a line and rename it.
+// ====================================================================
 const THEMES = {
   classic: {
      label: "black + white",
@@ -207,44 +207,46 @@ const PART_WORDS = {
    hints: "dim",
 };
 
-// ==============================================================
-// CONSOLE MEMORY (things that change while you use it)
-// ==============================================================
-let cwd = null;            // the bubble you're "in" (null = the very top)
-let prevCwd = null;        // where you were before ("cd -")
-let pending = null;        // a question waiting for answer
-let tut = null;            // the tutorial that's running (or null)
-let suggestion = null;     // "did you mean" command to show as a button
-let lastCmd = null;        // the main name of the last command that ran
-let lineCount = 0;         // how many lines you've typed (tutorial uses this)
+   
+// =====================================
+// console memory (change while you use)
+// =====================================
+let cwd = null;              // the bubble you're "in" (null = the very top)
+let prevCwd = null;          // where you were before ("cd -")
+let pending = null;          // question waiting for answer
+let tut = null;              // the tutorial that's running (or null)
+let suggestion = null;       // "did you mean" command to show as a button
+let lastCmd = null;          // the main name of the last command that ran
+let lineCount = 0;           // how many lines you've typed (tutorial uses this)
 let changedThisLine = false; // did the last line change the brain?
-let changedSinceMap = false; // changes you havent looked at yet on the map
-let toldAboutMap = false;  // explained that changes are real
-let backBtn;               // the ">_ Back to console" button on map
+let changedSinceMap = false; // changes you havent looked at yet on map
+let toldAboutMap = false;    // explained that changes are real
+let backBtn;                 // the ">_ Back to console" button on map
 let welcomed = false;
 let lastId = 0;
-let pastCommands = [];     // everything you typed
-let histPos = 0;           // where the ↑ ↓ keys are in that list
+let pastCommands = [];       // everything you typed
+let histPos = 0;             // where the ↑ ↓ keys are in that list
 const undoList = [];
 const redoList = [];
-const LOOKUP = {};         // command word -> command (filled in at start)
+const LOOKUP = {};           // command word -> command (filled in at start)
 let appearance = { theme: "classic", custom: {}, size: DEFAULT_SIZE };
 let box, out, input, promptEl, chipsEl, openBtn;
 
-// ==============================================================
+   
+// =====================================================================
 // PART 3: COMMANDS
-//   names    -> words that run it (the first one is the main name)
+//   names    -> words that run it (first one is the main name)
 //   level    -> "basic" shows in help, "advanced" only in help advanced
-//   group    -> which list it's under in help
-//   about    -> short "what it does"
+//   group    -> which list it's under, in help
+//   about    -> short "what it does" description
 //   examples -> [what you type, what it does]
 //   basicShow-> how many examples "help" shows (normally 1)
 //   notes    -> extra tips for "help <command>"
-//   run(text)-> what happens. text = what you typed after the command
-// ==============================================================
+//   run(text)-> what happens. text = what you type after the command
+// =====================================================================
 const COMMANDS = [
 
-  // ---------------- MOVING AROUND ----------------
+  // ------ moving around ------
   {
     names: ["look", "ls", "list", "dir", "ll"],
     level: "basic", group: "Moving around",
@@ -320,7 +322,7 @@ const COMMANDS = [
     },
   },
 
-  // ---------------- ADDING ----------------
+  // ------ adding ------
   {
     names: ["add", "make", "new", "create", "mkdir", "touch"],
     level: "basic", group: "Adding", basicShow: 4,
@@ -342,7 +344,7 @@ const COMMANDS = [
     run(text) { addCommand(text); },
   },
 
-  // ---------------- CHANGING ----------------
+  // ------ changing ------
   {
     names: ["done", "check", "tick", "finish", "complete"],
     level: "basic", group: "Changing",
@@ -412,7 +414,7 @@ const COMMANDS = [
     run() { doRedo(); },
   },
 
-  // ---------------- ORGANIZING (advanced) ----------------
+  // ------ organizing (advanced) ------
   {
     names: ["move"],
     level: "advanced", group: "Organizing",
@@ -501,7 +503,7 @@ const COMMANDS = [
     },
   },
 
-  // ---------------- FINDING (advanced) ----------------
+  // ------ finding (advanced) ------
   {
     names: ["tree"],
     level: "advanced", group: "Finding",
@@ -563,7 +565,7 @@ const COMMANDS = [
     },
   },
 
-  // ---------------- LOOK AND FEEL ----------------
+  // ------ look and feel ------
   {
     names: ["theme", "themes", "skin"],
     level: "basic", group: "Look and feel",
@@ -654,7 +656,7 @@ const COMMANDS = [
     },
   },
 
-  // ---------------- OTHER ----------------
+  // ------ other ------
   {
     names: ["help", "?", "man", "commands"],
     level: "basic", group: "Other",
@@ -718,9 +720,10 @@ const COMMANDS = [
   },
 ];
 
-// ==============================================================
-// PART 4: HELP PAGES
-// ==============================================================
+   
+// ==================
+// PART 4: help pages
+// ==================
 const TRICKS = [
   ["Ranges", "Section 1-8 · Section 1..8 · Section {1..8} · 8-1 counts down"],
   ["Lists", "Reading, Writing, Speaking  (commas)"],
@@ -793,133 +796,102 @@ function helpLine(example, what) {
   if (what) say("      " + dim(what));
 }
 
-// ==============================================================
-// PART 5: TUTORIALS
-//   say(P)   -> what I tell you   (P = practice bubble's name)
+// ====================================================================================
+// PART 5: tutorials
+//   say(P)   -> what I tell you        (P = practice bubble's name)
 //   type(P)  -> what you should type
 //   done(s)  -> true when you did it   (s.cmd = last command, s.box = practice bubble)
-// ==============================================================
+// ====================================================================================
+
 const TUTORIALS = {
   basic: {
     title: "Basics tutorial",
     sandbox: "Practice",
     finish: [
-      "🎉 You finished the tutorial! You know the basics now.",
-      "Remember: the console changes your REAL brain. Tap 🗺 Map anytime to see it.",
-      "Type `help` anytime to see the commands.",
-      "Want the nerdy tricks? Type `tutorial advanced`",
-      "Tap ✕ Exit at the top to go back to your app.",
+      "🎉 You did it! You officially know how to boss your brain around.",
+      "Quick reminder: everything you do in here is REAL. Tap 🗺 Map anytime to see it.",
+      "Forgot a command? `help` has your back.",
+      "Ready to get nerdy? Type `tutorial advanced`",
+      "Tap ✕ Exit up top whenever you wanna go back to the app. Peace! ✌️ - Aiden",
     ],
     steps: [
       {
         say: P => [
-          "👋 Hi! This is your brain console.",
-          "Anything in a box like `this` is a command. Type it exactly, then press Enter (or tap ⏎).",
-          `I made a practice bubble called ${P} so nothing important gets messed up.`,
-          "First, let's see what's at the top of your brain:",
+          "👋 Hey, I'm Aiden, I made this app. Welcome to the brain console!",
+          "Here's the deal: anything in a box like `this` is a command. Type it exactly, then hit Enter (or tap ⏎).",
+          `I made you a bubble called ${P} to mess around in, so you can't break anything important. Probably.`,
+          "Step one: stare into your own brain. (Legally.)",
         ],
         type: () => "look",
         done: s => s.cmd === "look",
       },
       {
-        say: () => [
-           "That list shows the bubbles at the top of your brain.",
-           "To go inside a bubble, type `go` and then its name:",
-        ],
+        say: () => ["That's everything chilling at the top of your brain.", "To jump inside a bubble, type `go` and then its name:"],
         type: P => "go " + P,
         done: s => cwd === s.box,
       },
       {
-        say: () => [
-           "You're inside it now. The green text next to where you type always shows where you are.",
-           "Let's make 3 steps at once. `1-3` means 1, 2 and 3:",
-        ],
+        say: () => ["You're in! See the green text by where you type? That's your 'you are here' sign.", "Now let's make 3 steps at once. `1-3` means 1, 2 and 3, because typing all 3 is for losers:"],
         type: () => "add Section 1-3",
         done: s => kidsOf(s.box, "step").length >= 3,
       },
       {
-        say: () => [
-           "Boom, 3 steps! Now let's put 4 units inside EACH section.",
-           "The word `to` means 'put them inside':",
-        ],
+        say: () => ["Boom, 3 steps. Now let's stuff 4 units inside EACH section.", "The word `to` basically means 'shove them inside':"],
         type: () => "add Unit 1-4 to Section 1-3",
         done: s => kidsOf(s.box, "step").filter(k => childrenOf(k.id).length >= 4).length >= 3,
       },
       {
         say: P => [
-          "That made 12 units with one command! 😎",
-          "⚠ This isn't pretend. The console changes your REAL brain map.",
-          `Let's go look! \`map\` takes you to your brain map, right where you are (inside ${P}).`,
-          "When you're done looking, tap the green  >_ Back to console  button.",
+          "12 units, one command. Lowkey a flex. 😎",
+          "⚠ Plot twist: this isn't pretend. The console changes your REAL brain map.",
+          `Don't believe me? \`map\` takes you straight to your map, right inside ${P}.`,
+          "When you're done being amazed, tap the green  >_ Back to console  button.",
         ],
         type: () => "map",
         done: s => s.cmd === "map",
       },
       {
-        say: () => [
-           "Welcome back! Did you see your 3 sections on the map? 🗺",
-           "You can tap 🗺 Map at the top of the console anytime to check what changed.",
-           "Now let's go inside Section 1:",
-        ],
+        say: () => ["Told you. 🗺 Those were your 3 sections, live on the map.", "Tip: the 🗺 Map button at the top does the same thing anytime.", "Now let's go inside Section 1:"],
         type: () => "go Section 1",
         done: s => cwd !== null && parentOf(cwd) === s.box,
       },
       {
-        say: () => [
-           "Now look around in here:",
-        ],
+        say: () => ["Have a look around in here:"],
         type: () => "look",
         done: s => s.cmd === "look" && cwd !== null && parentOf(cwd) === s.box,
       },
       {
-        say: () => [
-           "Pretend you finished the first 2 units. `done` checks them off:",
-        ],
+        say: () => ["Let's pretend you crushed the first 2 units. (I believe in you.)", "`done` checks them off:"],
         type: () => "done Unit 1-2",
         done: () => cwd !== null && childrenOf(cwd).filter(k => k.done).length >= 2,
       },
       {
-        say: () => [
-           "Section 1 is now 50% done (its ring on the map fills up too!).",
-           "`back` goes back out one level:",
-        ],
+        say: () => ["Section 1 is now 50% done. Its ring on the map fills up too. Satisfying, right?", "`back` takes you back out one level:"],
         type: () => "back",
         done: s => cwd === s.box,
       },
       {
-        say: () => [
-           "You can make bubbles AND what's inside them in one go, with the word `with`:",
-        ],
+        say: () => ["Speedrun time: make bubbles AND fill them in ONE command with the word `with`:"],
         type: () => "add Lesson 1-2 with Part 1-3",
         done: s => childrenOf(s.box).some(k => /^lesson/i.test(k.text) && childrenOf(k.id).length >= 3),
       },
       {
-        say: () => [
-           "Let's say Section 3 was a mistake. `delete` removes it.",
-           "I'll ask you first, so type `yes` when I do.",
-        ],
+        say: () => ["Okay, Section 3 is ugly. Let's `delete` it. 🗑️", "Don't worry, I'll ask first. Just type `yes` when I do."],
         type: () => "delete Section 3",
         done: s => !childByName(s.box, "Section 3"),
       },
       {
-        say: () => [
-           "Gone! Oops... we actually wanted it. `undo` brings it back:",
-        ],
+        say: () => ["Gone. And... instant regret. We kinda needed that.", "`undo` is your time machine:"],
         type: () => "undo",
         done: s => !!childByName(s.box, "Section 3"),
       },
       {
-        say: () => [
-           "Phew. 😅 Now let's make the console look cool:",
-        ],
+        say: () => ["Crisis avoided. 😅 Now let's make this thing look like a hacker movie:"],
         type: () => "theme green",
         done: () => appearance.theme === "green",
       },
       {
-        say: P => [
-           "Nice! (`theme classic` changes it back.)",
-           `Last thing: clean up by deleting ${P}:`,
-        ],
+        say: P => ["Very hacker. Much wow. (`theme classic` puts it back.)", `Last thing: clean up your mess. Delete ${P}:`],
         type: P => "delete " + P,
         done: s => !findBubble(s.box),
       },
@@ -930,134 +902,92 @@ const TUTORIALS = {
     title: "Advanced tutorial 🤓",
     sandbox: "Lab",
     finish: [
-      "🤓 You're a brain console pro now!",
-      "`help advanced` lists every command and trick.",
-      "Type `color reset` if you want the normal colors back.",
+      "🤓 Congrats, you're officially a brain console nerd. Wear it proudly.",
+      "`help advanced` lists every command and trick if you ever forget.",
+      "Stuck with gold? `color reset` brings the normal colors back. - Aiden",
     ],
     steps: [
       {
         say: P => [
-          "Welcome, nerd. 🤓 Commands are shown in boxes like `this`.",
-          "Linux nicknames work here: `ls` = look · `cd` = go · `pwd` = where · `rm` = delete · `mv` = move · `cp` = copy",
-          `I made a bubble called ${P} to experiment in. Everything you do changes your real map, so tap 🗺 Map anytime to watch.`,
+          "Oh, you're back for MORE? Respect. 🤓 It's Aiden again.",
+          "If you know Linux, good news: the nicknames work. `ls` = look · `cd` = go · `pwd` = where · `rm` = delete · `mv` = move · `cp` = copy",
+          `I made you a lab called ${P}. Everything here is real, so tap 🗺 Map anytime to watch the chaos.`,
         ],
         type: P => "cd " + P,
         done: s => cwd === s.box,
       },
       {
-        say: () => [
-           "Bash-style ranges work: `{1..4}`.",
-           "`in order` links them with blue arrows (and hides their main lines so it reads like a path):",
-        ],
+        say: () => ["Bash-style ranges work too: `{1..4}`. Fancy.", "`in order` chains them with blue arrows (and hides their main lines so it looks like a path):"],
         type: () => "add Level {1..4} in order",
         done: s => kidsOf(s.box, "step").filter(k => k.after != null).length >= 3,
       },
       {
-        say: () => [
-           "`all steps` = every step in here.",
-           "`outside` = hang them off their bubble on the map:",
-        ],
+        say: () => ["`all steps` means every step in here, no exceptions.", "`outside` makes them hang off their bubble on the map like little moons:"],
         type: () => "add Part 1-3 to all steps outside",
         done: s => kidsOf(s.box, "step").some(k => childrenOf(k.id).filter(c => c.outside).length >= 3),
       },
       {
-        say: () => [
-           "Want to see that? `map` shows it (tap  >_ Back to console  to come back):",
-        ],
+        say: () => ["Go admire your little moons. 🌙 `map` shows them (tap  >_ Back to console  to come back):"],
         type: () => "map",
         done: s => s.cmd === "map",
       },
       {
-        say: () => [
-           "Commas make lists, and the first word can pick the type (`goal`, `step` or `note`):",
-        ],
+        say: () => ["Commas make lists, and the first word picks the type (`goal`, `step` or `note`):"],
         type: () => "add note Tip A, Tip B",
         done: s => kidsOf(s.box, "note").length >= 2,
       },
       {
-        say: () => [
-           "`tree` shows everything below you as text, like the Linux tree command:",
-        ],
+        say: () => ["`tree` shows everything below you as text. Very 'I use Linux btw':"],
         type: () => "tree",
         done: s => s.cmd === "tree",
       },
       {
-        say: () => [
-           "Paths: `/` means 'inside'. Jump 2 levels deep at once:",
-        ],
+        say: () => ["Paths! `/` means 'inside'. Jump 2 levels deep in one go:"],
         type: () => "cd Level 2/Part 1",
         done: s => cwd !== null && parentOf(parentOf(cwd)) === s.box,
       },
       {
-        say: () => [
-           "`..` means up one level, so `../..` goes up two.",
-           "(and `cd -` jumps back to the last place you were)",
-        ],
+        say: () => ["`..` means up one level, so `../..` means up two.", "(Bonus: `cd -` teleports you back to wherever you just were.)"],
         type: () => "cd ../..",
         done: s => cwd === s.box,
       },
       {
-        say: () => [
-           "`find` searches your WHOLE brain:",
-        ],
+        say: () => ["Lost something? `find` searches your WHOLE brain:"],
         type: () => "find part",
         done: s => s.cmd === "find",
       },
       {
-        say: () => [
-           "`mkdir` works too (it makes a step):",
-        ],
+        say: () => ["`mkdir` works too. It makes a step, not a folder, but close enough:"],
         type: () => "mkdir Backup",
         done: s => !!childByName(s.box, "Backup"),
       },
       {
-        say: () => [
-           "`cp` copies bubbles with everything inside them:",
-        ],
+        say: () => ["`cp` copies bubbles AND everything inside them. Copy-paste, but cooler:"],
         type: () => "cp Level 1-2 to Backup",
-        done: s => {
-           const b = childByName(s.box, "Backup");
-           return !!b && childrenOf(b.id).length >= 2;
-        },
+        done: s => { const b = childByName(s.box, "Backup"); return !!b && childrenOf(b.id).length >= 2; },
       },
       {
-        say: () => [
-           "`mv` moves a bubble INTO another one if it exists.",
-           "Saved doesn't exist, so `mv` renames it instead (just like Linux):",
-        ],
+        say: () => ["`mv` moves a bubble INTO another one, if that one exists.", "Saved doesn't exist, so `mv` just renames it instead. Linux does the same thing, yk:"],
         type: () => "mv Backup to Saved",
         done: s => !!childByName(s.box, "Saved"),
       },
       {
-        say: () => [
-           "`;` runs more than one command.",
-           "`done` on a bubble checks off everything inside it:",
-        ],
+        say: () => ["`;` lets you run 2 commands at once. Efficiency. 📈", "Also, `done` on a bubble checks off EVERYTHING inside it:"],
         type: () => "done Level 1; ls",
-        done: s => {
-           const l = childByName(s.box, "Level 1");
-           return s.cmd === "look" && !!l && isFinished(l);
-        },
+        done: s => { const l = childByName(s.box, "Level 1"); return s.cmd === "look" && !!l && isFinished(l); },
       },
       {
-        say: () => [
-           "`history` shows what you typed.",
-           "`!!` runs the last command again, and `!5` runs command number 5.",
-        ],
+        say: () => ["`history` shows everything you've typed. No secrets here.", "`!!` runs your last command again, and `!5` runs command number 5."],
         type: () => "history",
         done: s => s.cmd === "history",
       },
       {
-        say: () => [
-           "You can color any part: text, background, prompt, commands, names, places, numbers, keywords, good, warnings, errors, hints.",
-        ],
+        say: () => ["You can color literally any part: text, background, prompt, commands, names, places, numbers, keywords, good, warnings, errors, hints.", "Let's make your prompt fancy:"],
         type: () => "color prompt gold",
         done: () => !!appearance.custom.prompt,
       },
       {
-        say: () => [
-           "Last one. `rm -f` deletes WITHOUT asking, so be careful (`undo` still works):",
-        ],
+        say: () => ["Final boss. 💀 `rm -f` deletes WITHOUT asking. No 'are you sure', no mercy.", "(`undo` still saves you though.)"],
         type: P => "rm -f " + P,
         done: s => !findBubble(s.box),
       },
@@ -1069,7 +999,7 @@ function startTutorial(kind) {
   const lesson = TUTORIALS[kind];
   if (tut) say(dim("(Starting a new tutorial.)"));
   const name = uniqueTopName(lesson.sandbox);
-  const sandbox = makeBubble(null, name, "goal", false);   // not undoable on purpose
+  const sandbox = makeBubble(null, name, "goal", false);
   saveBrain();
   refreshMap();
   tut = { kind, step: 0, box: sandbox.id, name };
@@ -1084,7 +1014,7 @@ function startTutorial(kind) {
 function showStep() {
   const lesson = TUTORIALS[tut.kind];
   const step = lesson.steps[tut.step];
-  tut.shownOnLine = lineCount;   // so I don't nag right after showing the step
+  tut.shownOnLine = lineCount;   // so i don't nag right after showing a step
   say("");
   say(kw(`🎓 Step ${tut.step + 1} of ${lesson.steps.length}`));
   step.say(tut.name).forEach(line => say(rich(line)));
@@ -1133,11 +1063,12 @@ function stopTutorial() {
   updateChips();
 }
 
-// ==============================================================
-// PART 6: WHAT THE COMMANDS DO
-// ==============================================================
+   
+// ============================
+// PART 6: what the commands do
+// ============================
 
-// ---------- add ----------
+// ------ add ------
 function addCommand(text) {
   if (!text.trim()) return say(bad("Add what? Try: ") + highlight("add Section 1-3"));
   const flags = { outside: false, inOrder: false };
@@ -1258,7 +1189,7 @@ function askAboutDuplicates(dups, keepText, onChoice) {
   });
 }
 
-// ---------- done / undone ----------
+// ------ done / undone ------
 function setDone(text, value) {
   const t = text.replace(/^off\s+/i, "").trim();
   if (!t) return say(bad(value ? "Check off what? Try: " : "Un-check what? Try: ") + highlight(value ? "done Unit 1-3" : "undone Unit 3"));
@@ -1276,7 +1207,7 @@ function setDone(text, value) {
   if (notes) say(dim("(Notes can't be checked off.)"));
 }
 
-// ---------- rename ----------
+// ------ rename ------
 function renameCommand(text) {
   const s = splitAt(text, ["to", "as", "into"], true);
   if (!s) return say(bad("Rename it to what? Try: ") + highlight("rename Section 1 to Basics"));
@@ -1311,7 +1242,7 @@ function renameCommand(text) {
   notes.forEach(n => say(dim(n)));
 }
 
-// ---------- move / mv ----------
+// ------ move / mv ------
 function moveCommand(text, smart) {
   let s = splitAt(text, ["to", "into", "in"], true);
   if (!s) {
@@ -1354,11 +1285,11 @@ function moveCommand(text, smart) {
   notes.forEach(n => say(dim(n)));
 }
 
-// ---------- copy ----------
+// ------ copy ------
 function copyCommand(text) {
   const t = text.replace(/(^|\s)-(?:r|R|a|-recursive)(?=\s|$)/g, " ").trim();
   let s = splitAt(t, ["to", "into"], true);
-  if (!s) {   // Linux style without "to":  cp Spanish/* French   or   cp "Unit 1" "Section 2"
+  if (!s) {   // Linux style without "to":  cp "Unit 1" "Section 2"
     const q = t.match(/^\s*"([^"]+)"\s+"([^"]+)"\s*$/) || t.match(/^(.+?\/\s*\*)\s+(.+)$/);
     if (q) s = { left: q[0].startsWith('"') ? `"${q[1]}"` : q[1], right: q[0].startsWith('"') ? `"${q[2]}"` : q[2] };
   }
@@ -1366,7 +1297,7 @@ function copyCommand(text) {
   const targets = findTargets(s.right);
   if (targets.error) return showError(targets);
 
-  // "everything in Spanish" / "inside Spanish" / "Spanish/*" = only what's inside
+  // "everything in Section 1" / "inside Section 1" / "Section 1/*" = only what's inside
   const left = s.left.trim();
   const m = left.match(/^(?:everything|all|all the stuff|what'?s|whats)\s+(?:in|inside|inside of|from)\s+(.+)$/i)
          || left.match(/^(?:inside of|inside|contents of|the contents of)\s+(.+)$/i)
@@ -1414,7 +1345,7 @@ function copyCheck(sources, targetIds) {
 function doCopy(sources, targetIds, mode) {
   let top = 0, made = 0, skipped = 0, replaced = 0;
   change("copy " + (sources.length === 1 ? sources[0].text : sources.length + " bubbles"), () => {
-    const trees = sources.map(src => snapshotTree(src.id));   // copy what's there NOW (never the copies)
+    const trees = sources.map(src => snapshotTree(src.id));   // copy what's there now (never the copies)
     targetIds.forEach(t => {
       const idMap = new Map();
       const pairs = [];
@@ -1463,7 +1394,7 @@ function buildCopy(tree, parent, name, idMap, pairs) {
   return count;
 }
 
-// ---------- delete ----------
+// ------ delete ------
 function deleteCommand(text) {
   let force = false;
   const t = text.replace(/(^|\s)-(?:-force|[rRfF]{1,2})(?=\s|$)/g, m => { if (/f/i.test(m)) force = true; return " "; }).trim();
@@ -1488,7 +1419,7 @@ function deleteCommand(text) {
   ask(["yes", "no"], a => (a === "yes" ? doIt() : say(dim("Okay, nothing was deleted."))));
 }
 
-// ---------- outside / inside ----------
+// ------ in / outside ------
 function setOutside(text, value) {
   const r = resolveItems(text);
   if (r.error) return showError(r);
@@ -1501,7 +1432,7 @@ function setOutside(text, value) {
   if (goals) say(dim("(Goals can't hang outside. On the map, drag a goal onto another one to attach it.)"));
 }
 
-// ---------- undo / redo ----------
+// ------ undo / redo ------
 // Every change is saved as "before" and "after" so undo can go back.
 function change(label, doChange) {
   const before = JSON.stringify(brain);
@@ -1557,7 +1488,7 @@ function doRedo() {
   go();
 }
 
-// ---------- making + deleting bubbles ----------
+// ------ making + deleting bubbles ------
 function makeBubble(parent, text, type, outside) {
   const b = { id: newId(), text, type, parent, done: false, after: null };
   if (outside) b.outside = true;
@@ -1617,16 +1548,17 @@ function leafSteps(b) {
   return found;
 }
 
-// redraw the brain map after a change
+// redraw the brain map after each change
 function refreshMap() {
   if (brainView !== null && !findBubble(brainView)) brainView = null;
   try { if (typeof closeMenu === "function") closeMenu(); } catch (e) { /* menu not ready */ }
   try { if (typeof showBrain === "function") showBrain(false); } catch (e) { console.error(e); }
 }
 
-// ==============================================================
-// PART 7: FINDING BUBBLES AND READING NAMES
-// ==============================================================
+   
+// =========================================
+// PART 7: finding bubbles and reading names
+// =========================================
 
 function norm(s) { return String(s).toLowerCase().replace(/\s+/g, " ").trim(); }
 function same(a, b) { return norm(a) === norm(b); }
@@ -1697,7 +1629,7 @@ function goTo(id) {
   say(dim("📂 ") + pl(pathText(id)) + dim(`  (${childrenOf(id).length} inside)`));
 }
 
-// Find ONE place from what was typed: "Spanish", "My 6 Languages/Spanish", "..", "~"
+// Find one place from what was typed: "Section 1", "Sections/Section 1", "..", "~"
 function findPlace(text, from = cwd) {
   let t = text.trim().replace(/^"(.*)"$/, "$1").trim();
   if (!t) return { error: "Which place? Type a name, like: go Spanish" };
@@ -1740,7 +1672,7 @@ function findPlace(text, from = cwd) {
   return { error: `I can't find "${t}".`, tip: `Type look to see what's in ${nameOf(from)}, or find ${parts[parts.length - 1]} to search everywhere.` };
 }
 
-// Find the places after "to": "Section 1-8", "French, Italian", "all steps"
+// find the places after "to": "Section 1-8", "Unit 1, Container 1", "all steps"
 function findTargets(spec) {
   const s = spec.trim();
   const all = s.match(/^(all|each|every|everything|\*)(?:\s+(?:of\s+)?(?:the\s+)?(steps?|goals?|notes?|ones?|bubbles?|things?|of them))?$/i);
@@ -1775,7 +1707,7 @@ function findTargets(spec) {
   return { ids };
 }
 
-// Find the bubbles a command is about: "Unit 1-3 in Section 1", "all notes", "Spanish"
+// find the bubbles a command is about: "Unit 1-3 in Section 1", "all notes", "Unit 1"
 function resolveItems(text) {
   let t = text.trim(), base = cwd;
   if (!t) return { error: "Which ones? Type a name after the command." };
@@ -1865,7 +1797,7 @@ function grabFlags(text, flags) {
   return t.trim();
 }
 
-// splits "Unit 1-10 to Section 1-8" at a word (but never inside "quotes")
+// splits "Unit 1-10 to Section 1-8" at a word (but never inside `""`)
 function splitAt(text, words, useLast) {
   const padded = " " + text + " ";
   const m = mask(padded);
@@ -1883,7 +1815,7 @@ function splitAt(text, words, useLast) {
   return { left, right, word: hit[1] };
 }
 
-// splits on commas (but never inside "quotes")
+// splits on commas (but never inside `""`)
 function splitList(spec) {
   const m = mask(spec), parts = [];
   let start = 0;
@@ -1894,7 +1826,7 @@ function splitList(spec) {
   return parts;
 }
 
-// lowercase copy where everything inside "quotes" is hidden, so words in names don't count
+// lowercase copy where everything inside `""` is hidden, so words in names don't count
 function mask(s) {
   let result = "", inQuotes = false;
   for (let i = 0; i < s.length; i++) {
@@ -1905,7 +1837,7 @@ function mask(s) {
   return result;
 }
 
-// "go Spanish; look" -> ["go Spanish", "look"]
+// "go Section 1; look" -> ["go Section 1", "look"]
 function splitCommands(line) {
   const m = mask(line), list = [];
   let start = 0;
@@ -1917,7 +1849,7 @@ function splitCommands(line) {
   return list.map(x => x.trim()).filter(Boolean);
 }
 
-// ---------- showing bubbles ----------
+// ------ showing bubbles ------
 function icon(b) {
   if (b.type === "goal") return kw("◆");
   if (b.type === "note") return pl("✎");
@@ -2003,11 +1935,12 @@ function showError(res) {
   if (res.tip) say(dim(res.tip));
 }
 
-// ==============================================================
-// PART 8: THE SCREEN
-// ==============================================================
+   
+// ==================
+// PART 8: the screen
+// ==================
 
-// ---------- printing ----------
+// ------ printing ------
 function esc(s) {
   return String(s).replace(/[&<>"]/g, ch => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[ch]));
 }
@@ -2081,7 +2014,7 @@ function promptHtml() {
 
 function updatePrompt() { promptEl.innerHTML = promptHtml(); }
 
-// ---------- quick buttons ----------
+// ------ quick buttons ------
 function addChip(label, action, main) {
   const chip = document.createElement("button");
   chip.type = "button";
@@ -2114,7 +2047,7 @@ function updateChips() {
   QUICK_BUTTONS.forEach(c => addChip(c, () => submit(c)));
 }
 
-// ---------- questions (yes / no, keep / new ...) ----------
+// ------ questions (yes / no, keep / new ...) ------
 function ask(choices, onAnswer) {
   pending = { choices, onAnswer };
   say(dim("Type ") + choices.map(c => cm(c)).join(dim(" or ")) + dim("  (or tap a button)"));
@@ -2135,7 +2068,7 @@ function matchChoice(line, choices) {
   return null;
 }
 
-// ---------- running what you typed ----------
+// ------ running what you typed ------
 function submit(raw) {
   let line = String(raw).replace(/[“”„]/g, '"').replace(/[‘’]/g, "'").trim();
   say(promptHtml() + " " + highlight(line));
@@ -2256,7 +2189,7 @@ function distance(a, b) {
   return d[a.length][b.length];
 }
 
-// ---------- old commands (↑ ↓) ----------
+// ------ old commands (↑ ↓) ------
 function remember(line) {
   if (pastCommands[pastCommands.length - 1] !== line) pastCommands.push(line);
   if (pastCommands.length > HISTORY_LIMIT) pastCommands = pastCommands.slice(-HISTORY_LIMIT);
@@ -2270,7 +2203,7 @@ function recall(dir) {
   input.value = pastCommands[histPos] || "";
 }
 
-// ---------- Tab finishes names ----------
+// ------ tab finishes names ------
 function complete() {
   const v = input.value;
   if (!v.trim()) return;
@@ -2298,7 +2231,7 @@ function complete() {
   }
 }
 
-// ---------- colors + saving ----------
+// ------ colors + saving ------
 function currentColor(part) {
   return appearance.custom[part] || (THEMES[appearance.theme] || THEMES.classic)[part];
 }
@@ -2351,7 +2284,7 @@ function saveSettings() {
   try { localStorage.setItem(SAVE_KEY, JSON.stringify({ appearance, history: pastCommands })); } catch (e) { /* storage full */ }
 }
 
-// ---------- opening + closing ----------
+// ------ opening + closing ------
 function openConsole() {
   if (backBtn) backBtn.classList.remove("show");
   if (!tut) {
@@ -2433,7 +2366,7 @@ function buildScreen() {
   box.querySelector(".con-help").addEventListener("click", () => submit("help"));
   box.querySelector(".con-map").addEventListener("click", () => submit("map"));
 
-  // the ">_ Back to console" button that shows on the map
+  // the ">_ Back to console" button that shows on map
   backBtn = document.createElement("button");
   backBtn.type = "button";
   backBtn.className = "con-back";
@@ -2467,7 +2400,7 @@ function buildScreen() {
   }
 }
 
-// the "Open brain console" button in Settings (only shows when Second Brain is on)
+// the "open brain console" button in settings (only shows when second brain is on)
 function addOpenButton() {
   const settingsTab = document.getElementById("settings");
   if (!settingsTab) return;
@@ -2483,9 +2416,10 @@ function addOpenButton() {
   sync();
 }
 
-// ==============================================================
-// PART 9: START UP
-// ==============================================================
+   
+// ================
+// PART 9: start up
+// ================
 function start() {
   COMMANDS.forEach(c => c.names.forEach(n => { LOOKUP[n.toLowerCase()] = c; }));
   loadSettings();
