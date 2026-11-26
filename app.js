@@ -429,7 +429,7 @@ function findPath(a, b, obstacles) {
       obstacles.forEach(o => {
         const d = Math.hypot(x - o.x, y - o.y);
         if (d < o.r) price += 80;
-        else if (d < o.r + 28) price += (o.r + 28 - d) / 28 * 3.5;
+        else if (d < o.r + 28) price += (o.r + 28 - d) / 28 * 4;
       });
       cost[r * cols + c] = price;
     }
