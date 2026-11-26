@@ -229,32 +229,7 @@ function isFinished(bubble) {
   return progress(bubble.id) === 1;
 }
 
-// brain: smart helper
 
-const knownOrders = [
-  ["spanish", "portuguese"],
-  ["spanish", "italian"],
-  ["html", "css"],
-  ["css", "javascript"],
-  ["javascript", "react"],
-  ["scratch", "python"]
-];
-
-function autoLink(bubble) {
-  const siblings = childrenOf(bubble.parent).filter(s => s.id !== bubble.id);
-  const name = bubble.text.toLowerCase();
-  knownOrders.forEach(([first, then]) => {
-    if (name.includes(then)) {
-      const match = siblings.find(s => s.text.toLowerCase().includes(first));
-      if (match) bubble.after = match.id;
-    }
-    if (name.includes(first)) {
-      siblings.forEach(s => {
-        if (s.text.toLowerCase().includes(then) && !s.after) s.after = bubble.id;
-      });
-    }
-  });
-}
 
 // brain: actions
 
@@ -270,7 +245,6 @@ function addBubble() {
     after: null
   };
   brain.push(bubble);
-  autoLink(bubble);
   input.value = "";
   saveBrain();
   showBrain();
@@ -282,7 +256,6 @@ function renameBubble(item) {
       const name = prompt("Rename bubble:", item.text);
       if (name === null || name.trim() === "") return;
       item.text = name.trim();
-      autoLink(item);
       saveBrain();
       showBrain(false);
   }
