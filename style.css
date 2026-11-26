@@ -395,3 +395,6 @@ li small {
 #bubbleMenu .danger {
   background: #ef4444;
 }
+#bubbleMenu .setting {
+  background: var(--bg);
+}
