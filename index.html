@@ -48,12 +48,16 @@
     <div id="brainTips"></div>
 
     <input id="bubbleText" placeholder="New bubble">
-    <select id="bubbleType">
-      <option value="goal">Goal</option>
-      <option value="step">Step</option>
-      <option value="note">Note / idea</option>
-    </select>
-    <button onclick="addBubble()">Add</button>
+    <div class="brain-add">
+      <input id="bubbleText" placeholder="New bubble">
+      <select id="bubbleType">
+        <option value="goal">Goal</option>
+        <option value="step">Step</option>
+        <option value="note">Note</option>
+      </select>
+      <button onclick="addBubble()">+</button>
+    </div>
+    <button id="toolsToggle" onclick="toggleTools()">Bubble options</button>
 
     <div id="bubbleTools">
       <label class="setting">
