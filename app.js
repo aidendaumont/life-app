@@ -345,64 +345,176 @@ function smoothPath(points) {
   return d;
 }
 
-// start as smooth arc ("base" shape)
-function routeLine(a, b, obstacles, bow) {
-  const N = 48;
+// brain: line routing
+
+function hitsBubble(p, obstacles) {
+  return obstacles.some(o => Math.hypot(p.x - o.x, p.y - o.y) < o.r);
+}
+
+function arcPoints(a, b, bow, n) {
   const dx = b.x - a.x, dy = b.y - a.y;
   const len = Math.hypot(dx, dy);
-  if (len === 0) return "";
   const nx = -dy / len, ny = dx / len;
-
-  const base = [];
-  for (let i = 0; i <= N; i++) {
-    const t = i / N;
+  const pts = [];
+  for (let i = 0; i <= n; i++) {
+    const t = i / n;
     const bend = Math.sin(Math.PI * t) * bow * len;
-    base.push({
+    pts.push({
         x: a.x + dx * t + nx * bend,
         y: a.y + dy * t + ny * bend,
     });
   }
-  const pts = base.map(p => ({
-      x: p.x,
-      y: p.y,
-  }));
+  return pts;
+}
 
-  // each bubble gets ONE side for the line to pass on
-  const sides = obstacles.map(o => {
-    const s = Math.sign((o.x - a.x) * nx + (o.y - a.y) * ny);
-    return s === 0 ? (Math.sign(bow) || 1) : -s;
-  });
-  
-  function pushOut() {
-    for (let i = 1; i < N; i++) {
-      const p = pts[i];
-      obstacles.forEach((o, k) => {
-        const qx = p.x - o.x, qy = p.y - o.y;
-        if (qx * qx + qy * qy >= o.r * o.r) return;
-        const mx = nx * sides[k], my = ny * sides[k];
-        const along = qx * mx + qy * my;
-        const push = -along + Math.sqrt(along * along - (qx * qx + qy * qy - o.r * o.r));
-        p.x += mx * push;
-        p.y += my * push;
+function routeLine(a, b, obstacles, bow) {
+  if (Math.hypot(b.x - a.x, b.y - a.y) < 1) return "";
+  const arc = arcPoints(a, b, bow, 24);
+  if (!arc.some(p => hitsBubble(p, obstacles))) return smoothPath(arc);
+  return smoothPath(findPath(a, b, obstacles));
+}
+
+class MinHeap {
+  constructor() {
+      this.items = [];
+  }
+  get size() {
+      return this.items.length;
+  }
+  push(item) {
+    const h = this.items;
+    h.push(item);
+    let i = h.length - 1;
+    while (i > 0) {
+      const parent = (i - 1) >> 1;
+      if (h[parent].f <= h[i].f) break;
+      [h[parent], h[i]] = [h[i], h[parent]];
+      i = parent;
+    }
+  }
+  pop() {
+    const h = this.items;
+    const top = h[0];
+    const last = h.pop();
+    if (h.length > 0) {
+      h[0] = last;
+      let i = 0;
+      while (true) {
+        const l = i * 2 + 1, r = l + 1;
+        let small = i;
+        if (l < h.length && h[l].f < h[small].f) small = l;
+        if (r < h.length && h[r].f < h[small].f) small = r;
+        if (small === i) break;
+        [h[small], h[i]] = [h[i], h[small]];
+        i = small;
+      }
+    }
+    return top;
+  }
+}
+
+function findPath(a, b, obstacles) {
+  const cell = 8, pad = 140;
+  const minX = Math.min(a.x, b.x) - pad, minY = Math.min(a.y, b.y) - pad;
+  const cols = Math.ceil((Math.max(a.x, b.x) + pad - minX) / cell);
+  const rows = Math.ceil((Math.max(a.y, b.y) + pad - minY) / cell);
+  const total = cols * rows;
+
+  // 1. give every square a price
+  const cost = new Float32Array(total);
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      const x = minX + (c + 0.5) * cell, y = minY + (r + 0.5) * cell;
+      let price = 1;
+      obstacles.forEach(o => {
+        const d = Math.hypot(x - o.x, y - o.y);
+        if (d < o.r) price += 80;
+        else if (d < o.r + 24) price += (o.r + 24 - d) / 24 * 4;
       });
+      cost[r * cols + c] = price;
     }
   }
 
-  // rubber band: push out of bubbles, smooth, repeat
-  for (let round = 0; round < 40; round++) {
-    pushOut();
-    const moved = pts.map((p, i) => ({
-        x: p.x - base[i].x,
-        y: p.y - base[i].y,
-    }));
-    for (let i = 1; i < N; i++) {
-      pts[i].x = base[i].x + (moved[i - 1].x + moved[i].x * 2 + moved[i + 1].x) / 4;
-      pts[i].y = base[i].y + (moved[i - 1].y + moved[i].y * 2 + moved[i + 1].y) / 4;
+  function toIndex(p) {
+    const c = Math.min(cols - 1, Math.max(0, Math.floor((p.x - minX) / cell)));
+    const r = Math.min(rows - 1, Math.max(0, Math.floor((p.y - minY) / cell)));
+    return r * cols + c;
+  }
+  const startI = toIndex(a), goalI = toIndex(b);
+  const goalC = goalI % cols, goalR = Math.floor(goalI / cols);
+
+  // 2. A*: find the cheapest route
+  const best = new Float32Array(total).fill(Infinity);
+  const from = new Int32Array(total).fill(-1);
+  const closed = new Uint8Array(total);
+  const open = new MinHeap();
+  const moves = [
+    [1, 0, 1], [-1, 0, 1], [0, 1, 1], [0, -1, 1],
+    [1, 1, 1.414], [1, -1, 1.414], [-1, 1, 1.414], [-1, -1, 1.414]
+  ];
+  best[startI] = 0;
+  open.push({
+      i: startI,
+      f: 0,
+  });
+
+  while (open.size > 0) {
+    const { i } = open.pop();
+    if (i === goalI) break;
+    if (closed[i]) continue;
+    closed[i] = 1;
+    const c = i % cols, r = Math.floor(i / cols);
+    for (const [mc, mr, step] of moves) {
+      const nc = c + mc, nr = r + mr;
+      if (nc < 0 || nr < 0 || nc >= cols || nr >= rows) continue;
+      const ni = nr * cols + nc;
+      const g = best[i] + step * cost[ni];
+      if (g < best[ni]) {
+        best[ni] = g;
+        from[ni] = i;
+        open.push({
+            i: ni,
+            f: g + Math.hypot(goalC - nc, goalR - nr),
+        });
+      }
     }
   }
-  pushOut();
 
-  return smoothPath(pts);
+  // 3. walk backwards from the goal to build the route
+  let path = [];
+  let i = goalI;
+  while (i !== -1) {
+    const c = i % cols, r = Math.floor(i / cols);
+    path.unshift({
+        x: minX + (c + 0.5) * cell,
+        y: minY + (r + 0.5) * cell,
+    });
+    if (i === startI) break;
+    i = from[i];
+  }
+  if (path.length < 2) return [a, b];
+  path[0] = {
+      x: a.x,
+      y: a.y,
+  };
+  path[path.length - 1] = {
+      x: b.x,
+      y: b.y,
+  };
+
+  // 4. smooth out the "staircase" into one soft curve
+  for (let pass = 0; pass < 10; pass++) {
+    path = path.map((p, k) => {
+      if (k === 0 || k === path.length - 1) return p;
+      return {
+        x: (path[k - 1].x + p.x * 2 + path[k + 1].x) / 4,
+        y: (path[k - 1].y + p.y * 2 + path[k + 1].y) / 4
+      };
+    });
+  }
+
+  // keep every 2nd point so it draws faster
+  return path.filter((p, k) => k % 2 === 0 || k === path.length - 1);
 }
 
 function drawBubble(group, item, x, y, r, isCenter) {
