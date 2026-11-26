@@ -287,10 +287,40 @@ function zoomOut() {
 }
 
 function setAfter() {
-  const value = document.getElementById("afterSelect").value;
-  findBubble(brainView).after = value === "" ? null : Number(value);
+  setFirst(findBubble(brainView), document.getElementById("afterSelect").value);
+}
+
+function fillOrderSelects(item, firstId, afterId) {
+  const siblings = childrenOf(item.parent).filter(s => s.id !== item.id);
+  const first = document.getElementById(firstId);
+  const after = document.getElementById(afterId);
+  first.innerHTML = '<option value="">Nothing</option>';
+  after.innerHTML = '<option value="">Nothing</option>';
+  siblings.forEach(s => {
+    first.add(new Option(s.text, s.id, false, item.after === s.id));
+    after.add(new Option(s.text, s.id, false, s.after === item.id));
+  });
+}
+
+function setFirst(item, value) {
+  item.after = value === "" ? null : Number(value);
+  const other = findBubble(item.after);
+  if (other && other.after === item.id) other.after = null;
   saveBrain();
-  showBrain();
+  showBrain(false);
+}
+
+function setAfterOf(item, value) {
+  childrenOf(item.parent).forEach(s => {
+    if (s.after === item.id) s.after = null;
+  });
+  if (value !== "") {
+    const other = findBubble(Number(value));
+    other.after = item.id;
+    if (item.after === other.id) item.after = null;
+  }
+  saveBrain();
+  showBrain(false);
 }
 
 function removeBubble(id) {
@@ -325,6 +355,7 @@ function openMenu(item) {
   dragging = null;
   menuItem = item;
   document.getElementById("menuTitle").textContent = item.text;
+  fillOrderSelects(item, "menuFirst", "menuAfter");
   document.getElementById("bubbleMenu").classList.add("open");
 }
 
@@ -782,28 +813,10 @@ function showTools(center) {
   document.getElementById("toolsToggle").style.display = center ? "" : "none";
   document.getElementById("bubbleTools").style.display = center ? "" : "none";
   if (!center) return;
-  const siblings = childrenOf(center.parent).filter(s => s.id !== center.id);
+  const siblings = childrenOf(center.parent).filter(s => s.id !== center.id)
 
-  const first = document.getElementById("afterSelect");
-  first.innerHTML = '<option value="">Nothing</option>';
-  siblings.forEach(s => {
-    const option = document.createElement("option");
-    option.value = s.id;
-    option.textContent = s.text;
-    if (center.after === s.id) option.selected = true;
-    first.appendChild(option);
-  });
-
-  const after = document.getElementById("beforeSelect");
-  after.innerHTML = '<option value="">Nothing</option>';
-  siblings.forEach(s => {
-    const option = document.createElement("option");
-    option.value = s.id;
-    option.textContent = s.text;
-    if (s.after === center.id) option.selected = true;
-    after.appendChild(option);
-  });
-
+  fillOrderSelects(center, "afterSelect", "beforeSelect");
+    
   document.getElementById("centerLineRow").style.display = center.attach != null ? "" : "none";
   document.getElementById("centerLineToggle").checked = !!center.alsoCenter;
 }
@@ -1121,13 +1134,7 @@ function attachTo(item, wasSatellite, target) {
 }
 
 function setBefore() {
-  const value = document.getElementById("beforeSelect").value;
-  childrenOf(findBubble(brainView).parent).forEach(s => {
-    if (s.after === brainView) s.after = null;
-  });
-  if (value !== "") findBubble(Number(value)).after = brainView;
-  saveBrain();
-  showBrain();
+  setAfterOf(findBubble(brainView), document.getElementById("beforeSelect").value);
 }
 
 function toggleCenterLine() {
