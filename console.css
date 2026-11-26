@@ -1,0 +1,199 @@
+/* ==============================================================
+   🧠 BRAIN CONSOLE  —  console.css
+   The colors come from the theme in console.js
+   (they arrive here as --con-text, --con-bg, --con-prompt, etc.)
+   ============================================================== */
+
+/* ---------- the "Open brain console" button in Settings ---------- */
+#openConsole {
+  display: block;
+  width: 100%;
+  margin-top: 12px;
+  background: #000;
+  color: #4ade80;
+  border: 1px solid #1f2937;
+  text-align: left;
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+.con-btn-icon {
+  color: #e5e7eb;
+  margin-right: 6px;
+}
+
+/* ---------- the full-screen console ---------- */
+#console {
+  /* backup colors (the theme in console.js replaces these) */
+  --con-bg: #000000;
+  --con-text: #e5e7eb;
+  --con-prompt: #4ade80;
+  --con-command: #22d3ee;
+  --con-name: #fde68a;
+  --con-place: #60a5fa;
+  --con-number: #f472b6;
+  --con-keyword: #c084fc;
+  --con-good: #4ade80;
+  --con-warning: #fbbf24;
+  --con-error: #f87171;
+  --con-dim: #8b919c;
+  --con-size: 14px;
+
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 100%;
+  z-index: 1000;
+  display: none;
+  flex-direction: column;
+  box-sizing: border-box;
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+  background: var(--con-bg);
+  color: var(--con-text);
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  font-size: var(--con-size);
+}
+#console.open {
+  display: flex;
+}
+
+/* ---------- top bar (title, help, EXIT) ---------- */
+.con-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-bottom: 1px solid rgba(128, 128, 128, 0.3);
+}
+.con-title {
+  flex: 1;
+  min-width: 0;
+  color: var(--con-prompt);
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+#console .con-help {
+  background: transparent;
+  color: var(--con-text);
+  border: 1px solid rgba(128, 128, 128, 0.5);
+  border-radius: 10px;
+  padding: 8px 12px;
+  font-family: inherit;
+  font-size: 15px;
+}
+#console .con-exit {
+  background: #dc2626;
+  color: #ffffff;
+  border-radius: 10px;
+  padding: 10px 16px;
+  font-family: inherit;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+/* ---------- where the text shows up ---------- */
+.con-out {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 10px 12px;
+  line-height: 1.45;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.con-line {
+  min-height: 1.45em;
+}
+.con-out b {
+  color: var(--con-text);
+}
+
+/* ---------- quick buttons (help, look, back...) ---------- */
+.con-chips {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 8px 10px;
+  border-top: 1px solid rgba(128, 128, 128, 0.3);
+  scrollbar-width: none;
+}
+.con-chips::-webkit-scrollbar {
+  display: none;
+}
+#console .con-chip {
+  flex: none;
+  background: transparent;
+  color: var(--con-text);
+  border: 1px solid rgba(128, 128, 128, 0.5);
+  border-radius: 999px;
+  padding: 7px 14px;
+  font-family: inherit;
+  font-size: 14px;
+}
+#console .con-chip.main {
+  border-color: var(--con-prompt);
+  color: var(--con-prompt);
+  font-weight: 700;
+}
+
+/* ---------- the typing row ---------- */
+.con-input-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  padding: 6px 10px 10px;
+}
+.con-prompt {
+  flex: none;
+  max-width: 48%;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+#console .con-in {
+  flex: 1;
+  min-width: 0;
+  width: auto;
+  margin: 0;
+  padding: 8px 0;
+  border: none;
+  border-radius: 0;
+  outline: none;
+  background: transparent;
+  color: var(--con-text);
+  caret-color: var(--con-prompt);
+  font-family: inherit;
+  font-size: 16px; /* 16 or bigger stops iPhone from zooming in */
+}
+#console .con-run {
+  background: var(--con-prompt);
+  color: var(--con-bg);
+  border-radius: 10px;
+  padding: 8px 14px;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+/* ---------- color coding ---------- */
+.k-text    { color: var(--con-text); }
+.k-prompt  { color: var(--con-prompt); font-weight: 700; }
+.k-command { color: var(--con-command); font-weight: 700; }
+.k-name    { color: var(--con-name); }
+.k-place   { color: var(--con-place); }
+.k-number  { color: var(--con-number); }
+.k-keyword { color: var(--con-keyword); }
+.k-good    { color: var(--con-good); }
+.k-warning { color: var(--con-warning); }
+.k-error   { color: var(--con-error); }
+.k-dim     { color: var(--con-dim); }
+
+/* little previews in "theme" */
+.con-swatch {
+  padding: 2px 8px;
+  border-radius: 6px;
+  border: 1px solid rgba(128, 128, 128, 0.5);
+}
