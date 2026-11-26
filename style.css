@@ -112,7 +112,7 @@ li small {
   border-radius: 12px;
   margin-top: 12px;
 }
-.goal-top .goal-bottom {
+.goal-top, .goal-bottom {
   display: flex;
   justify-content: space-between;
   align-items: center;
