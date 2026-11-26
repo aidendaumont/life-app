@@ -23,6 +23,9 @@ let pointers = new Map();
 let pan = null;
 let pinch = null;
 let pressTimer = null;
+let mapNodes = [];
+let attachTimer = null;
+let hoverKey = null;
 
 function save() {
     localStorage.setItem("tasks", JSON.stringify(tasks));
@@ -90,6 +93,7 @@ showBrain();
 function openTab(name) {
     document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
     document.getElementById(name).classList.add("active");
+    if (name === "brain") showBrain();
 }
 
 function today() {
@@ -317,7 +321,12 @@ function deleteBubble() {
   }
   const parent = findBubble(brainView).parent;
   brain = brain.filter(b => !doomed.includes(b.id));
-  brain.forEach(b => { if (doomed.includes(b.after)) b.after = null; });
+  brain.forEach(b => {
+      if (doomed.includes(b.after)) b.after = null;
+  });
+  brain.forEach(b => {
+      if (doomed.includes(b.attach)) b.attach = null;
+  });
   brainView = parent;
   saveBrain();
   showBrain();
@@ -534,7 +543,14 @@ function findPath(a, b, obstacles) {
   return path.filter((p, k) => k % 2 === 0 || k === path.length - 1);
 }
 
-function drawBubble(group, item, x, y, r, isCenter) {
+function drawBubble(group, node) {
+  const {
+      item,
+      x,
+      y,
+      r,
+      isCenter,
+  } = node;
   const p = item ? progress(item.id) : null;
   const type = item ? item.type : "goal";
 
@@ -554,8 +570,11 @@ function drawBubble(group, item, x, y, r, isCenter) {
     }, group);
   }
 
+  let cls = "bubble " + type;
+  if (item && item.done) cls += " done";
+  if (hoverKey !== null && hoverKey === keyOf(node)) cls += " target";
   const g = svgEl("g", {
-      class: "bubble " + type + (item && item.done ? " done" : ""),
+      class: cls,
   }, group);
   svgEl("circle", {
       cx: x,
@@ -564,7 +583,7 @@ function drawBubble(group, item, x, y, r, isCenter) {
   }, g);
 
   const label = item ? (item.done ? "✓ " : "") + item.text : "My brain";
-  const lines = wrapText(label, isCenter ? 12 : 10);
+  const lines = wrapText(label, isCenter ? 12 : r < 35 ? 8 : 10);
   const shift = p !== null ? 6 : 0;
   lines.forEach((line, i) => {
     const t = svgEl("text", {
@@ -582,7 +601,7 @@ function drawBubble(group, item, x, y, r, isCenter) {
     t.textContent = Math.round(p * 100) + "%";
   }
 
-  g.onpointerdown = e => startDrag(e, item, isCenter);
+  g.onpointerdown = e => startDrag(e, node);
 }
 
 function showBrain(animate = true) {
@@ -596,64 +615,80 @@ function showBrain(animate = true) {
   const kids = childrenOf(brainView);
   const cx = 180, cy = 180, R = 120;
 
-  const spots = kids.map((k, i) => {
-      if (k.x != null) return {
-          x: k.x,
-          y: k.y,
-      };
-      const angle = -Math.PI / 2 + i * 2 * Math.PI / kids.length;
-      return {
-          x: cx + R * Math.cos(angle),
-          y: cy + R * Math.sin(angle),
-      };
+  // 1. the middle bubble
+  mapNodes = [{
+      item: center,
+      x: cx,
+      y: cy,
+      r: 48,
+      isCenter: true,
+  }];
+
+  // 2. bubbles connected straight to the middle
+  const loose = kids.filter(k => !kids.some(s => s.id === k.attach));
+  loose.forEach((k, i) => {
+    const angle = -Math.PI / 2 + i * 2 * Math.PI / loose.length;
+    mapNodes.push({
+      item: k, r: 38,
+      x: k.x != null ? k.x : cx + R * Math.cos(angle),
+      y: k.y != null ? k.y : cy + R * Math.sin(angle)
+    });
   });
 
-  // bubbles the lines avoid (center 1st, then each child)
-  const obstacles = [{
-        x: cx,
-        y: cy,
-        r: 68,
-    },
-    ...spots.map(s => ({
-        x: s.x,
-        y: s.y,
-        r: 56,
-    }))
-  ];
+  // 3. bubbles hanging off other bubbles (can chain: Spanish → French → Italian)
+  const queue = mapNodes.slice(1);
+  while (queue.length > 0) {
+    const anchor = queue.shift();
+    if (anchor.satellite) continue;
+    const hangers = [
+      ...kids.filter(k => k.attach === anchor.item.id).map(item => ({
+          item,
+          satellite: false,
+      })),
+      ...childrenOf(anchor.item.id).filter(c => c.outside).map(item => ({
+          item,
+          satellite: true,
+      }))
+    ];
+    queue.push(...placeGroup(anchor, hangers));
+  }
 
-  // branches from center
-  spots.forEach((s, i) => {
-    const others = obstacles.filter((o, n) => n !== 0 && n !== i + 1);
-    const d = routeLine({
-        x: cx,
-        y: cy,
-    }, s, others, 0.1);
-    svgEl("path", {
-        d,
-        class: "branch",
+  // 4. lines
+  const obstacles = mapNodes.map(n => ({
+      x: n.x,
+      y: n.y,
+      r: n.r + 18,
+  }));
+  const centerNode = mapNodes[0];
+  const nodeOf = id => mapNodes.find(n => n.item && n.item.id === id);
+
+  function linkLine(fromNode, toNode, bow, cls) {
+    const others = obstacles.filter((o, k) => mapNodes[k] !== fromNode && mapNodes[k] !== toNode);
+    return svgEl("path", {
+        d: routeLine(fromNode, toNode, others, bow),
+        class: cls,
     }, group);
+  }
+
+  // regular lines: to whatever each bubble hangs off
+  mapNodes.slice(1).forEach(n => {
+    const lineFrom = n.anchor || centerNode;
+    const mustFirst = n.item.after != null && nodeOf(n.item.after) === lineFrom;
+    linkLine(lineFrom, n, mustFirst ? 0.18 : 0.1, "branch");
+    if (n.anchor && n.item.alsoCenter) linkLine(centerNode, n, 0.1, "branch");
   });
 
-  // dashed "do first" links
-  kids.forEach((k, i) => {
-    const j = kids.findIndex(s => s.id === k.after);
-    if (j === -1) return;
-    const a = spots[j], b = spots[i];
-    const len = Math.hypot(b.x - a.x, b.y - a.y) || 1;
-    const nx = -(b.y - a.y) / len, ny = (b.x - a.x) / len;
-    const midX = (a.x + b.x) / 2, midY = (a.y + b.y) / 2;
-    const side = Math.sign((midX - cx) * nx + (midY - cy) * ny) || 1;
-    const others = obstacles.filter((o, n) => n !== i + 1 && n !== j + 1);
-    const d = routeLine(a, b, others, 0.25 * side);
-    svgEl("path", {
-        d,
-        class: "first-link",
-    }, group);
+  // blue arrow lines: "must do first"
+  mapNodes.slice(1).forEach(n => {
+    const first = n.item.after != null ? nodeOf(n.item.after) : null;
+    if (!first) return;
+    const sameAsLine = first === (n.anchor || centerNode);
+    const path = linkLine(first, n, sameAsLine ? -0.18 : 0.2, "need-line");
+    drawArrows(group, path);
   });
 
-  // bubbles on top
-  drawBubble(group, center, cx, cy, 48, true);
-  kids.forEach((k, i) => drawBubble(group, k, spots[i].x, spots[i].y, 38, false));
+  // 5. bubbles on top
+  mapNodes.forEach(n => drawBubble(group, n));
 
   // path at the top: My brain / Learn languages / Spanish
   const names = [];
@@ -694,16 +729,30 @@ function showTips(center, kids) {
 function showTools(center) {
   document.getElementById("bubbleTools").style.display = center ? "" : "none";
   if (!center) return;
-  const select = document.getElementById("afterSelect");
-  select.innerHTML = '<option value="">Nothing</option>';
-  childrenOf(center.parent).forEach(s => {
-    if (s.id === center.id) return;
+  const siblings = childrenOf(center.parent).filter(s => s.id !== center.id);
+
+  const first = document.getElementById("afterSelect");
+  first.innerHTML = '<option value="">Nothing</option>';
+  siblings.forEach(s => {
     const option = document.createElement("option");
     option.value = s.id;
     option.textContent = s.text;
     if (center.after === s.id) option.selected = true;
-    select.appendChild(option);
+    first.appendChild(option);
   });
+
+  const after = document.getElementById("beforeSelect");
+  after.innerHTML = '<option value="">Nothing</option>';
+  siblings.forEach(s => {
+    const option = document.createElement("option");
+    option.value = s.id;
+    option.textContent = s.text;
+    if (s.after === center.id) option.selected = true;
+    after.appendChild(option);
+  });
+
+  document.getElementById("centerLineRow").style.display = center.attach != null ? "" : "none";
+  document.getElementById("centerLineToggle").checked = !!center.alsoCenter;
 }
 
 // brain: dragging
@@ -729,40 +778,49 @@ function svgPoint(e) {
   };
 }
 
-function startDrag(e, item, isCenter) {
+function startDrag(e, node) {
   const pt = svgPoint(e);
   dragging = {
-      item,
-      isCenter,
-      startX: pt.x,
-      startY: pt.y,
-      moved: false,
+    item: node.item,
+    isCenter: !!node.isCenter,
+    satellite: !!node.satellite,
+    startX: pt.x,
+    startY: pt.y,
+    moved: false
   };
   clearTimeout(pressTimer);
-  if (item) {
-      pressTimer = setTimeout(() => {
-          if (dragging && !dragging.moved) {
-              dragging = null;
-              renameBubble(item);
-          }
-      }, 500);
+  if (node.item) {
+    pressTimer = setTimeout(() => {
+      if (dragging && !dragging.moved) {
+        dragging = null;
+        renameBubble(node.item);
+      }
+    }, 500);
   }
 }
 
 function moveDrag(e) {
   if (!dragging || dragging.isCenter) return;
   const pt = svgPoint(e);
-  if (Math.hypot(pt.x - dragging.startX, pt.y - dragging.startY) > 6) {
-      dragging.moved = true;
-      clearTimeout(pressTimer);
+  if (Math.hypot(pt.x - dragging.startX, pt.y - dragging.startY) > 10) {
+    dragging.moved = true;
+    clearTimeout(pressTimer);
   }
   if (!dragging.moved) return;
-  dragging.item.x = pt.x;
-  dragging.item.y = pt.y;
+  if (dragging.satellite) {
+    dragging.item.ox = pt.x;
+    dragging.item.oy = pt.y;
+  } else {
+    dragging.item.x = pt.x;
+    dragging.item.y = pt.y;
+  }
+  checkHover(pt);
   showBrain(false);
 }
 
 function endDrag() {
+  clearTimeout(attachTimer);
+  hoverKey = null;
   if (!dragging) return;
   const {
       item,
@@ -771,16 +829,30 @@ function endDrag() {
   } = dragging;
   dragging = null;
   if (moved) {
-      saveBrain();
-      return;
+    saveBrain();
+    showBrain(false);
+    return;
   }
   if (isCenter) zoomOut();
   else if (item.type === "step") {
-      item.done = !item.done;
-      saveBrain();
-      showBrain();
+    item.done = !item.done;
+    saveBrain();
+    showBrain();
   }
   else zoomIn(item.id);
+}
+
+function resetLayout() {
+  mapNodes.forEach(n => {
+    if (!n.item || n.isCenter) return;
+    delete n.item.x;
+    delete n.item.y;
+    delete n.item.ox;
+    delete n.item.oy;
+  });
+  resetCamera();
+  saveBrain();
+  showBrain();
 }
 
 function startPinch() {
@@ -809,6 +881,8 @@ function onPointerDown(e) {
         dragging = null;
         pan = null;
         startPinch();
+        clearTimeout(attachTimer);
+        hoverKey = null;
     } else if (pointers.size === 1 && !dragging) {
         pan = {
             startX: e.clientX,
@@ -847,6 +921,7 @@ function onPointerMove(e) {
 }
 
 function onPointerUp(e) {
+    clearTimeout(attachTimer);
     clearTimeout(pressTimer);
     pointers.delete(e.pointerId);
     if (pinch) {
@@ -866,16 +941,6 @@ function onPointerUp(e) {
     if (pointers.size === 0) pan = null;
 }
 
-function resetLayout() {
-  childrenOf(brainView).forEach(k => {
-      delete k.x;
-      delete k.y;
-  });
-  resetCamera();
-  saveBrain();
-  showBrain();
-}
-
 const brainMap = document.getElementById("brainMap");
 brainMap.onpointerdown = onPointerDown;
 brainMap.onpointermove = onPointerMove;
@@ -887,3 +952,113 @@ brainMap.onpointercancel = e => {
 };
 
 document.addEventListener("gesturestart", e => e.preventDefault());
+
+
+
+// brain: attaching
+
+function keyOf(node) {
+  return node.isCenter ? "center" : node.item.id;
+}
+
+function placeGroup(anchor, hangers) {
+  const added = [];
+  const base = Math.atan2(anchor.y - 180, anchor.x - 180);
+  hangers.forEach((h, i) => {
+    const r = h.satellite ? 30 : 38;
+    const angle = base + (i - (hangers.length - 1) / 2) * 0.8;
+    const dist = anchor.r + r + 30;
+    const sx = h.satellite ? h.item.ox : h.item.x;
+    const sy = h.satellite ? h.item.oy : h.item.y;
+    const node = {
+      item: h.item, r, satellite: h.satellite, anchor,
+      x: sx != null ? sx : anchor.x + dist * Math.cos(angle),
+      y: sy != null ? sy : anchor.y + dist * Math.sin(angle)
+    };
+    mapNodes.push(node);
+    added.push(node);
+  });
+  return added;
+}
+
+function drawArrows(group, path) {
+  const total = path.getTotalLength();
+  for (let d = 42; d < total - 42; d += 22) {
+    const p = path.getPointAtLength(d);
+    const q = path.getPointAtLength(d + 1);
+    const angle = Math.atan2(q.y - p.y, q.x - p.x) * 180 / Math.PI;
+    svgEl("path", {
+      d: "M-4 -4 L2 0 L-4 4",
+      class: "chevron",
+      transform: `translate(${p.x} ${p.y}) rotate(${angle})`
+    }, group);
+  }
+}
+
+function checkHover(pt) {
+  const under = mapNodes.find(n => n.item !== dragging.item && Math.hypot(pt.x - n.x, pt.y - n.y) < n.r);
+  const key = under ? keyOf(under) : null;
+  if (key === hoverKey) return;
+  hoverKey = key;
+  clearTimeout(attachTimer);
+  if (under) {
+    const item = dragging.item, satellite = dragging.satellite;
+    attachTimer = setTimeout(() => attachTo(item, satellite, under), 700);
+  }
+}
+
+function makesLoop(item, target) {
+  let b = target;
+  for (let i = 0; i < 50 && b; i++) {
+    if (b.id === item.id) return true;
+    b = b.attach != null ? findBubble(b.attach) : null;
+  }
+  return false;
+}
+
+function attachTo(item, wasSatellite, target) {
+  hoverKey = null;
+  dragging = null;
+  if (target.isCenter) {
+    item.attach = null;
+    if (wasSatellite) {
+      item.parent = brainView;
+      item.outside = false;
+    }
+  } else if (target.satellite || target.item.type === "step") {
+    showBrain(false);
+    return;
+  } else if (item.type === "goal") {
+    if (makesLoop(item, target.item)) {
+        showBrain(false);
+        return;
+    }
+    item.attach = target.item.id;
+  } else {
+    item.parent = target.item.id;
+    item.outside = true;
+    item.attach = null;
+  }
+  delete item.x;
+  delete item.y;
+  delete item.ox;
+  delete item.oy;
+  saveBrain();
+  showBrain(false);
+}
+
+function setBefore() {
+  const value = document.getElementById("beforeSelect").value;
+  childrenOf(findBubble(brainView).parent).forEach(s => {
+    if (s.after === brainView) s.after = null;
+  });
+  if (value !== "") findBubble(Number(value)).after = brainView;
+  saveBrain();
+  showBrain();
+}
+
+function toggleCenterLine() {
+  findBubble(brainView).alsoCenter = document.getElementById("centerLineToggle").checked;
+  saveBrain();
+  showBrain();
+}
