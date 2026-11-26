@@ -93,7 +93,10 @@ showBrain();
 function openTab(name) {
     document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
     document.getElementById(name).classList.add("active");
-    if (name === "brain") showBrain();
+    if (name === "brain") {
+        resetCamera();
+        showBrain();
+    }
 }
 
 function today() {
@@ -712,6 +715,7 @@ function showTips(center, kids) {
 }
 
 function showTools(center) {
+  document.getElementById("toolsToggle").style.display = center ? "" : "none";
   document.getElementById("bubbleTools").style.display = center ? "" : "none";
   if (!center) return;
   const siblings = childrenOf(center.parent).filter(s => s.id !== center.id);
@@ -740,18 +744,29 @@ function showTools(center) {
   document.getElementById("centerLineToggle").checked = !!center.alsoCenter;
 }
 
+function toggleTools() {
+    document.getElementById("bubbleTools").classList.toggle("open");
+}
+
+
+
 // brain: dragging
 function resetCamera() {
-    camera = {
-        x: 0,
-        y: 0,
-        scale: 1,
-    };
+  const rect = document.getElementById("brainMap").getBoundingClientRect();
+  const ratio = rect.width ? rect.height / rect.width : 1;
+  camera = {
+      x: 0,
+      y: 180 - 180 * ratio,
+      scale: 1,
+  };
 }
 
 function applyCamera() {
-    const size = 360 / camera.scale;
-    document.getElementById("brainMap").setAttribute("viewBox", `${camera.x} ${camera.y} ${size} ${size}`);
+  const map = document.getElementById("brainMap");
+  const rect = map.getBoundingClientRect();
+  const ratio = rect.width ? rect.height / rect.width : 1;
+  const size = 360 / camera.scale;
+  map.setAttribute("viewBox", `${camera.x} ${camera.y} ${size} ${size * ratio}`);
 }
 
 function svgPoint(e) {
@@ -759,7 +774,7 @@ function svgPoint(e) {
   const size = 360 / camera.scale;
   return {
     x: camera.x + (e.clientX - rect.left) / rect.width * size,
-    y: camera.y + (e.clientY - rect.top) / rect.height * size,
+    y: camera.y + (e.clientY - rect.top) / rect.width * size,
   };
 }
 
@@ -893,14 +908,14 @@ function onPointerMove(e) {
         const size = 360 / camera.scale;
         const midX = (p1.x + p2.x) / 2, midY = (p1.y + p2.y) / 2;
         camera.x = pinch.world.x - (midX - rect.left) / rect.width * size;
-        camera.y = pinch.world.y - (midY - rect.top) / rect.height * size;
+        camera.y = pinch.world.y - (midY - rect.top) / rect.width * size;
         applyCamera();
     } else if (dragging) {
         moveDrag(e);
     } else if (pan) {
         const size = 360 / camera.scale;
         camera.x = pan.camX - (e.clientX - pan.startX) / rect.width * size;
-        camera.y = pan.camY - (e.clientY - pan.startY) / rect.height * size;
+        camera.y = pan.camY - (e.clientY - pan.startY) / rect.width * size;
         applyCamera();
     }
 }
