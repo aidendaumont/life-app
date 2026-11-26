@@ -22,6 +22,7 @@ let camera = {
 let pointers = new Map();
 let pan = null;
 let pinch = null;
+let pressTimer = null;
 
 function save() {
     localStorage.setItem("tasks", JSON.stringify(tasks));
@@ -269,6 +270,22 @@ function addBubble() {
   input.value = "";
   saveBrain();
   showBrain();
+
+  function renameBubble(item) {
+      pointers.clear();
+      pan = null;
+      const name = prompt("Rename bubble:", item.text);
+      if (name === null || name.trim() === "") return;
+      item.text = name.trim();
+      autoLink(item);
+      saveBrain();
+      showBrain(false);
+  }
+
+    function renameCenter() {
+        if (brainView === null) return;
+        renameBubble(findBubble(brainView));
+    }
 }
 
 function zoomIn(id) {
@@ -721,12 +738,24 @@ function startDrag(e, item, isCenter) {
       startY: pt.y,
       moved: false,
   };
+  clearTimeout(pressTimer);
+  if (item) {
+      pressTimer = setTimeout(() => {
+          if (dragging && !dragging.moved) {
+              dragging = null;
+              renameBubble(item);
+          }
+      }, 500);
+  }
 }
 
 function moveDrag(e) {
   if (!dragging || dragging.isCenter) return;
   const pt = svgPoint(e);
-  if (Math.hypot(pt.x - dragging.startX, pt.y - dragging.startY) > 6) dragging.moved = true;
+  if (Math.hypot(pt.x - dragging.startX, pt.y - dragging.startY) > 6) {
+      dragging.moved = true;
+      clearTimeout(pressTimer);
+  }
   if (!dragging.moved) return;
   dragging.item.x = pt.x;
   dragging.item.y = pt.y;
@@ -775,6 +804,7 @@ function onPointerDown(e) {
     });
 
     if (pointers.size === 2) {
+        clearTimeout(pressTimer);
         saveBrain();
         dragging = null;
         pan = null;
@@ -817,6 +847,7 @@ function onPointerMove(e) {
 }
 
 function onPointerUp(e) {
+    clearTimeout(pressTimer);
     pointers.delete(e.pointerId);
     if (pinch) {
         if (pointers.size < 2) pinch = null;
