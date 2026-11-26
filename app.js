@@ -1076,3 +1076,19 @@ brainMap.addEventListener("touchstart", e => e.preventDefault(), {
 brainMap.addEventListener("touchmove", e => e.preventDefault(), {
     passive: false,
 });
+
+let lastRatio = null;
+
+function fitMap() {
+    const rect = brainMap.getBoundingClientRect();
+    if (!rect.width) return;
+    const ratio = rect.height / rect.width;
+    if (lastRatio !== null && ratio !== lastRatio) {
+        const size = 360 / camera.scale;
+        camera.y -= (ratio - lastRatio) * size / 2;
+    }
+    lastRatio = ratio;
+    showBrain(false);
+}
+
+new ResizeObserver(fitMap).observe(brainMap);
