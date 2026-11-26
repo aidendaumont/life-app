@@ -398,3 +398,7 @@ li small {
 #bubbleMenu .setting {
   background: var(--bg);
 }
+.setting select {
+  max-width: 55%;
+  text-overflow: ellipsis;
+}
