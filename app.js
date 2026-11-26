@@ -327,7 +327,12 @@ function wrapText(text, max) {
     }
   });
   lines.push(line);
-  return lines.slice(0, 3);
+  if (lines.length > 3) {
+      const kept = lines.slice(0, 3);
+      kept[2] = kept[2] + "...";
+      return kept;
+  }
+  return lines;
 }
 
 function smoothPath(points) {
@@ -673,6 +678,13 @@ function showBrain(animate = true) {
   names.unshift("My brain");
   document.getElementById("brainPath").textContent = names.join(" / ");
   document.getElementById("brainBack").style.visibility = center ? "visible" : "hidden";
+  const full = document.getElementById("bubbleFull");
+  if (center && (center.type === "note" || center.text.length > 30)) {
+      full.textContent = center.text;
+      full.classList.add("open");
+  } else {
+      full.classList.remove("open");
+  }
 
   showTips(center, kids);
   showTools(center);
