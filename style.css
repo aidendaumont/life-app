@@ -283,3 +283,18 @@ li small {
 #bubbleTools .setting {
   margin-top: 8px;
 }
+
+#bubbleFull {
+  display: none;
+  background: var(--card);
+  border-left: 3px solid var(--note);
+  padding: 10px 12px;
+  border-radius: 8px;
+  margin-bottom: 8px;
+  font-size: 15px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+#bubbleFull.open {
+  display: block;
+}
