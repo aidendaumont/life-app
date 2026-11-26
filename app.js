@@ -306,6 +306,7 @@ function setFirst(item, value) {
   item.after = value === "" ? null : Number(value);
   const other = findBubble(item.after);
   if (other && other.after === item.id) other.after = null;
+  if (menuItem) refreshMenu();
   saveBrain();
   showBrain(false);
 }
@@ -355,8 +356,20 @@ function openMenu(item) {
   dragging = null;
   menuItem = item;
   document.getElementById("menuTitle").textContent = item.text;
-  fillOrderSelects(item, "menuFirst", "menuAfter");
+  refreshMenu();
   document.getElementById("bubbleMenu").classList.add("open");
+}
+
+function refreshMenu() {
+  fillOrderSelects(menuItem, "menuFirst", "menuAfter");
+  document.getElementById("menuMainRow").style.display = menuItem.after != null ? "" : "none";
+  document.getElementById("menuMainToggle").checked = !!menuItem.hideMain;
+}
+
+function setHideMain(item, value) {
+  item.hideMain = value;
+  saveBrain();
+  showBrain(false);
 }
 
 function closeMenu() {
@@ -742,8 +755,10 @@ function showBrain(animate = true) {
   // regular lines: to whatever each bubble hangs off
   mapNodes.slice(1).forEach(n => {
     const lineFrom = n.anchor || centerNode;
-    const mustFirst = n.item.after != null && nodeOf(n.item.after) === lineFrom;
-    if (!mustFirst) linkLine(lineFrom, n, 0.1, "branch");
+    const first = n.item.after != null ? nodeOf(n.item.after) : null;
+    const mustFirst = first === lineFrom;
+    const hidden = n.item.hideMain && first;
+    if (!mustFirst && !hidden) linkLine(lineFrom, n, 0.1, "branch");
     if (n.anchor && n.item.alsoCenter) linkLine(centerNode, n, 0.1, "branch");
   });
 
