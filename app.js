@@ -296,10 +296,11 @@ function fillOrderSelects(item, firstId, afterId) {
   const after = document.getElementById(afterId);
   first.innerHTML = '<option value="">Nothing</option>';
   after.innerHTML = '<option value="">Nothing</option>';
-  siblings.forEach(s => {
-    first.add(new Option(s.text, s.id, false, item.after === s.id));
-    after.add(new Option(s.text, s.id, false, s.after === item.id));
-  });
+  siblings.filter(s => s.type !== "note").forEach(s => {
+      const name = s.text.length > 20 ? s.text.slice(0, 20) + "..." : s.text;
+      first.add(new Option(name, s.id, false, item.after === s.id));
+      after.add(new Option(name, s.id, false, s.after === item.id));
+  })
 }
 
 function setFirst(item, value) {
