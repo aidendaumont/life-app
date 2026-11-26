@@ -56,8 +56,16 @@
 
     <div id="bubbleTools">
       <label class="setting">
-        <span>Do first</span>
+        <span>Must do first</span>
         <select id="afterSelect" onchange="setAfter()"></select>
+      </label>
+      <label class="setting">
+        <span>Must do after</span>
+        <select id="beforeSelect" onchange="setBefore()"></select>
+      </label>
+      <label class="setting" id="centerLineRow">
+        <span>Line to middle too</span>
+        <input type="checkbox" switch id="centerLineToggle" onchange="toggleCenterLine()">
       </label>
       <button id="renameBubble" onclick="renameCenter()">Rename this bubble</button>
       <button id="deleteBubble" onclick="deleteBubble()">Delete this bubble</button>
