@@ -1047,3 +1047,10 @@ function toggleCenterLine() {
   saveBrain();
   showBrain();
 }
+
+brainMap.addEventListener("touchstart", e => e.preventDefault(), {
+    passive: false,
+});
+brainMap.addEventListener("touchmove", e => e.preventDefault(), {
+    passive: false,
+});
