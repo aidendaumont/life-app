@@ -150,6 +150,9 @@ li small {
   width: 100%;
   display: block;
   touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
 }
 #brain input {
   width: 100%;
@@ -259,4 +262,9 @@ li small {
   margin-left: auto;
   background: var(--card);
   font-size: 14px;
+}
+
+#renameBubble {
+  background: var(--card);
+  margin-top: 12px;
 }
